@@ -175,7 +175,7 @@ const projects = [
   title: "Cata Outlet",
   description: "Sistema de gestión de pagos para una tienda de ropa y joyería.",
   details:
-    "Cata Outlet es un sistema web desarrollado como proyecto académico, cuyo objetivo es gestionar cobros a clientes de forma segura y eficiente. Permite registrar clientes, calcular deudas, registrar pagos y consultar saldos en tiempo real. La interfaz fue diseñada para ser intuitiva en dispositivos móviles, facilitando su uso por el personal de la tienda. Incluye un módulo de autenticación de usuarios, notificaciones de actualización de deudas y generación de reportes.\n\nLos accesos son\n\nCorreo: prueba@pb.com\n\nContraseña: 123456",
+    "Cata Outlet es un sistema web desarrollado como proyecto académico, cuyo objetivo es gestionar cobros a clientes de forma segura y eficiente. Permite registrar clientes, calcular deudas, registrar pagos y consultar saldos en tiempo real. La interfaz fue diseñada para ser intuitiva en dispositivos móviles, facilitando su uso por el personal de la tienda. Incluye un módulo de autenticación de usuarios, notificaciones de actualización de deudas y generación de reportes.\n\nLos accesos son:\n\nCorreo: prueba@pb.com\n\nContraseña: 123456",
   technologies: ["React", "Firebase"],
   type: "Frontend",
   date: "2024-07-08",
