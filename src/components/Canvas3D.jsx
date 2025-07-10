@@ -23,7 +23,9 @@ const Canvas3D = () => {
     // Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    mountRef.current.appendChild(renderer.domElement);
+    const mountNode = mountRef.current;
+    mountNode.appendChild(renderer.domElement);
+
 
     // Luces
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -88,9 +90,9 @@ const Canvas3D = () => {
     window.addEventListener("resize", handleResize);
 
     return () => {
-      if (mountRef.current && renderer.domElement.parentNode === mountRef.current) {
-        mountRef.current.removeChild(renderer.domElement);
-      }
+      if (mountNode && renderer.domElement.parentNode === mountNode) {
+        mountNode.removeChild(renderer.domElement);
+        }
       window.removeEventListener("resize", handleResize);
       renderer.dispose();
     };
