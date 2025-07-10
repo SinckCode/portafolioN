@@ -29,7 +29,7 @@ const FilterPanel = ({
   return (
     <div className="filter-panel">
       <div className="filter-header">
-        <h3>🎯 Filtros avanzados</h3>
+        <h3>🎯 Filtro</h3>
         <div className="sort-demo-wrapper">
           <select
             className="sort-select"
