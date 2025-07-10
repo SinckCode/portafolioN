@@ -139,7 +139,7 @@ import videoAmazonClone from "./assets/AmazonClone/AmazonClone1.mp4";
 
 
 // PDF (manual o documento de presentación)
-import pdfCRECIBV from "./assets/Crecibv/CRECIBV.pdf";
+//import pdfCRECIBV from "./assets/Crecibv/CRECIBV.pdf";
 
 
 const projects = [
