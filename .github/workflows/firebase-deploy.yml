@@ -19,13 +19,13 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build project
         run: npm run build
 
       - name: Deploy to Firebase Hosting
-        uses: w9jds/firebase-action@v11
+        uses: w9jds/firebase-action@v14.9.0
         with:
           args: deploy --only hosting
         env:
