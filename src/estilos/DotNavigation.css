@@ -1,0 +1,25 @@
+.dot-navigation {
+  position: fixed;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  z-index: 999;
+}
+
+.dot {
+  display: block;
+  width: 10px;
+  height: 10px;
+  background: #888;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.dot.active {
+  width: 14px;
+  height: 14px;
+  background: #00b4d8; /* Tu color primario */
+}

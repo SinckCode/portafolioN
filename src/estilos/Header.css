@@ -1,0 +1,34 @@
+.header-desktop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: transparent;
+  z-index: 999;
+}
+
+.nav-desktop ul {
+  display: flex;
+  justify-content: flex-start;
+  gap: 2rem;
+  padding: 1rem 2rem;
+  list-style: none;
+}
+
+.nav-desktop ul li a {
+  color: var(--color-white);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.nav-desktop ul li a:hover {
+  color: var(--color-primary);
+}
+
+/* Ocultar en móviles */
+@media screen and (max-width: 768px) {
+  .header-desktop {
+    display: none;
+  }
+}

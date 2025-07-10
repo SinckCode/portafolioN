@@ -1,0 +1,87 @@
+.floating-menu {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 999;
+}
+
+/* Botón flotante */
+.menu-toggle {
+  background: #ffffff;
+  border: none;
+  border-radius: 50%;
+  width: 55px;
+  height: 55px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+.menu-toggle span {
+  display: block;
+  width: 25px;
+  height: 3px;
+  background: #000;
+  margin: 3px 0;
+  transition: all 0.3s ease;
+}
+.menu-toggle.open span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+.menu-toggle.open span:nth-child(2) {
+  opacity: 0;
+}
+.menu-toggle.open span:nth-child(3) {
+  transform: rotate(-45deg) translate(5px, -5px);
+}
+
+/* Menú desplegado */
+.menu-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  position: absolute;
+  bottom: 70px;
+  right: 0;
+  background: hsla(0, 0%, 100%, 0.95);
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.menu-items.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.menu-items li {
+  border-bottom: 1px solid #ddd;
+}
+.menu-items li:last-child {
+  border-bottom: none;
+}
+
+.menu-items li a {
+  display: block;
+  padding: 0.75rem 1.5rem;
+  color: #000;
+  text-decoration: none;
+  transition: background 0.3s ease;
+}
+.menu-items li a:hover {
+  background: #eee;
+}
+
+/* Ocultar en escritorio */
+@media screen and (min-width: 769px) {
+  .floating-menu {
+    display: none;
+  }
+}

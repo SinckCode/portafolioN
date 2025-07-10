@@ -1,0 +1,222 @@
+/* === FONDO DEL MODAL === */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(5, 5, 5, 0.92);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  padding: 1.5rem;
+  /* Optional blur effect */
+  /* backdrop-filter: blur(4px); */
+}
+
+/* === CONTENIDO PRINCIPAL DEL MODAL === */
+.modal-content {
+  background: #1a1a1a;
+  color: #fff;
+  padding: 1.5rem;
+  max-width: 1000px;
+  width: 100%;
+  max-height: 90vh; /* evita que se desborde en pantallas pequeñas */
+  overflow-y: auto;
+  border-radius: 12px;
+  position: relative;
+  animation: fadeIn 0.3s ease-in-out;
+  box-shadow: 0 0 30px #000;
+}
+
+/* === BOTÓN CERRAR === */
+.close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background-color: #444;
+  border: none;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  z-index: 10;
+}
+
+.close-btn:hover {
+  background-color: #ff4d4d;
+}
+
+/* === TITULO Y DESCRIPCIÓN === */
+.modal-title {
+  font-size: 2rem;
+  margin-top: 0.5rem;
+  color: #00b4d8;
+  text-align: center;
+}
+
+.modal-description {
+  margin: 1.5rem auto;
+  font-size: 1rem;
+  color: #ccc;
+  max-width: 800px;
+  line-height: 1.6;
+  text-align: left; /* mejora la lectura de listas */
+  white-space: pre-line; /* <-- esto respeta los \n del texto */
+}
+
+
+/* === ETIQUETAS (TECHNOLOGÍAS) === */
+.modal-tags {
+  margin: 1rem 0;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag {
+  background-color: #292c34;
+  color: #aaa;
+  padding: 0.4rem 0.8rem;
+  border-radius: 15px;
+  font-size: 0.85rem;
+}
+
+/* === REPRODUCTOR PRINCIPAL === */
+.modal-carousel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.main-media {
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #111;
+  box-shadow: 0 0 15px #000;
+  transition: all 0.3s ease-in-out;
+}
+
+/* === MINIATURAS === */
+.thumbnail-row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  max-width: 100%;
+  padding-bottom: 0.5rem;
+  scrollbar-width: thin;
+  scroll-behavior: smooth;
+}
+
+.thumbnail-row::-webkit-scrollbar {
+  height: 6px;
+}
+.thumbnail-row::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 10px;
+}
+.thumbnail-row::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.thumb-wrapper {
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.thumb-wrapper.active {
+  border-color: #00b4d8;
+  box-shadow: 0 0 6px #00b4d8;
+}
+
+.thumb {
+  width: 100px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 6px;
+  display: block;
+  background: #111;
+}
+
+.thumb:hover {
+  transform: scale(1.05);
+}
+
+/* === ENLACES (DEMO / GITHUB / API...) === */
+.modal-links {
+  margin-top: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.modal-links a {
+  background-color: #222;
+  color: #fff;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+
+.modal-links a:hover {
+  background-color: #00b4d8;
+  color: #000;
+}
+
+/* === ANIMACIÓN === */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .modal-content {
+    padding: 1rem;
+  }
+
+  .modal-title {
+    font-size: 1.5rem;
+  }
+
+  .modal-description {
+    font-size: 0.95rem;
+  }
+
+  .modal-links a {
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .thumb {
+    width: 70px;
+    height: 50px;
+  }
+
+  .main-media {
+    max-height: 240px;
+  }
+}

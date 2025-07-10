@@ -1,0 +1,7 @@
+.services-section {
+  padding: 4rem 2rem;
+  text-align: center;
+}
+.services-section h2 {
+  color: var(--color-primary);
+}
