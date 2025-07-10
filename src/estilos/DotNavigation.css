@@ -23,3 +23,9 @@
   height: 14px;
   background: #00b4d8; /* Tu color primario */
 }
+
+@media screen and (max-width: 768px) {
+  .dot-navigation {
+    display: none;
+  }
+}

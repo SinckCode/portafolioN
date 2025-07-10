@@ -96,3 +96,42 @@
     font-size: 1rem;
   }
 }
+
+@media (max-width: 768px) {
+  #about {
+    padding: 2.5rem 1.2rem;
+  }
+
+  #about h2 {
+    font-size: 1.9rem;
+    margin-top: 0.5rem;
+  }
+
+  #about h3 {
+    font-size: 1.3rem;
+    margin-top: 2rem;
+    padding-bottom: 0.4rem;
+  }
+
+  #about p,
+  #about ul li {
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.3rem;
+    margin: 1rem;
+    text-align: justify; /* <-- mejora para móvil, evita bloques justificados irregulares */
+  }
+
+  .avatar-wrapper img {
+    width: 130px;
+    height: 130px;
+  }
+
+  #about ul {
+    padding-left: 1rem;
+  }
+
+  #about ul li {
+    margin-bottom: 1.2rem;
+  }
+}

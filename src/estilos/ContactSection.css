@@ -132,3 +132,16 @@
   margin-top: 0.5rem;
   color: #3dd5f3;
 }
+
+@media screen and (max-width: 768px) {
+  .contact-container{
+    width: 100%;
+    max-width: 70%;
+  }
+  .contact-card{
+    width: 70%;
+  }
+  .contact-left{
+    align-items: center;
+  }
+}

@@ -1,87 +1,123 @@
-.floating-menu {
+.floating-wrapper {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 999;
-}
-
-/* Botón flotante */
-.menu-toggle {
-  background: #ffffff;
-  border: none;
-  border-radius: 50%;
-  width: 55px;
-  height: 55px;
-  cursor: pointer;
+  bottom: 32px;
+  left: 65%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  pointer-events: none;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
-}
-.menu-toggle span {
-  display: block;
-  width: 25px;
-  height: 3px;
-  background: #000;
-  margin: 3px 0;
-  transition: all 0.3s ease;
-}
-.menu-toggle.open span:nth-child(1) {
-  transform: rotate(45deg) translate(5px, 5px);
-}
-.menu-toggle.open span:nth-child(2) {
-  opacity: 0;
-}
-.menu-toggle.open span:nth-child(3) {
-  transform: rotate(-45deg) translate(5px, -5px);
 }
 
-/* Menú desplegado */
-.menu-items {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  position: absolute;
-  bottom: 70px;
-  right: 0;
-  background: hsla(0, 0%, 100%, 0.95);
-  border-radius: 1rem;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  opacity: 0;
-  transform: translateY(10px);
-  pointer-events: none;
-  transition: all 0.3s ease;
-}
-
-.menu-items.show {
-  opacity: 1;
-  transform: translateY(0);
+.floating-btn,
+.floating-menu {
   pointer-events: auto;
 }
 
-.menu-items li {
-  border-bottom: 1px solid #ddd;
-}
-.menu-items li:last-child {
-  border-bottom: none;
+/* 🔘 Botón flotante con color principal */
+.floating-btn {
+  background: #00b4d8;
+  border: none;
+  border-radius: 50%;
+  width: 72px;
+  height: 72px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  right: -3rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s ease;
 }
 
-.menu-items li a {
-  display: block;
-  padding: 0.75rem 1.5rem;
-  color: #000;
+/* Líneas del ícono (hamburguesa / X) */
+.floating-btn span {
+  position: absolute;
+  width: 30px;
+  height: 3px;
+  background: #fff;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.floating-btn span:nth-child(1) {
+  top: 26px;
+}
+.floating-btn span:nth-child(2) {
+  top: 34px;
+}
+.floating-btn span:nth-child(3) {
+  top: 42px;
+}
+
+.floating-btn.open span:nth-child(1) {
+  transform: rotate(45deg);
+  top: 34px;
+}
+.floating-btn.open span:nth-child(2) {
+  opacity: 0;
+}
+.floating-btn.open span:nth-child(3) {
+  transform: rotate(-45deg);
+  top: 34px;
+}
+
+/* 🧭 Menú emergente */
+.floating-menu {
+  position: fixed;
+  bottom: 120px;
+  left: 25%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(14px);
+  border-radius: 20px;
+  padding: 1.2rem 2rem;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+  animation: fadeInScale 0.3s ease forwards;
+  min-width: 220px;
+  z-index: 9998;
+}
+
+.floating-menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.floating-menu li {
+  margin: 16px 0;
+  text-align: center;
+}
+
+.floating-menu a {
+  color: #fff;
+  font-weight: 600;
+  font-size: 1.1rem;
   text-decoration: none;
-  transition: background 0.3s ease;
-}
-.menu-items li a:hover {
-  background: #eee;
+  font-family: 'Segoe UI', sans-serif;
+  transition: color 0.3s ease;
 }
 
-/* Ocultar en escritorio */
+.floating-menu a:hover {
+  color: #00b4d8;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+/* ❌ Ocultar en escritorio */
 @media screen and (min-width: 769px) {
-  .floating-menu {
+  .floating-wrapper {
     display: none;
   }
 }
