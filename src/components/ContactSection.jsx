@@ -12,18 +12,28 @@ const ContactSection = () => {
     e.preventDefault();
     setLoading(true);
 
+    const formElement = form.current;
+
+    // Crear input oculto para reply_to
+    const emailValue = formElement.email.value;
+    const replyToInput = document.createElement("input");
+    replyToInput.type = "hidden";
+    replyToInput.name = "reply_to";
+    replyToInput.value = emailValue;
+    formElement.appendChild(replyToInput);
+
     emailjs
       .sendForm(
         "service_302lpx4",
         "template_ryuenca",
-        form.current,
+        formElement,
         "f3miXzQ6E7d-ctWBE"
       )
       .then(
         () => {
           setMessage("✅ Tu mensaje fue enviado correctamente.");
           setLoading(false);
-          form.current.reset();
+          formElement.reset();
         },
         (error) => {
           setMessage("❌ Hubo un error al enviar tu mensaje. Intenta de nuevo.");
