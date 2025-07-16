@@ -6,7 +6,7 @@ import "../estilos/HeroSection.css";
 const HeroSection = () => (
   <section id="home" className="hero-section-alt">
     <Fade direction="up" cascade damping={0.1} triggerOnce>
-      <h1 className="hero-title-alt">Ángelll David Onestoo Fríass</h1>
+      <h1 className="hero-title-alt">Ánssgelll David Onestoo Fríass</h1>
       <h2 className="hero-subtitle-alt">
         Desarrollador Full Stack · Infraestructura & DevOps
       </h2>
