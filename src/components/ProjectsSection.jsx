@@ -83,7 +83,7 @@ const ProjectsSection = () => {
   return (
     <section className="projects-section" id="portfolio">
       <div className="section-header">
-        <h2>🎮 Mi trayectoria en código prueba</h2>
+        <h2>🎮 Mi trayectoria en código</h2>
         <p>Cada proyecto aquí es una historia: algunas nacieron por curiosidad, otras para resolver problemas reales. Son fragmentos de mi crecimiento como desarrollador, donde la lógica se cruza con la pasión por crear.</p>
       </div>
 
