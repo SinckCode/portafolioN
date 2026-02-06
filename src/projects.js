@@ -106,6 +106,40 @@ import imgAmazon5 from "./assets/AmazonClone/AmazonClone5.png";
 import imgAmazon6 from "./assets/AmazonClone/AmazonClone6.png";
 import imgAmazon7 from "./assets/AmazonClone/AmazonClone7.png";
 
+// Clima Aula – Imágenes
+import imgSensoresClima1 from "./assets/SensoresClima/SensoresClima1.png";
+import imgSensoresClima2 from "./assets/SensoresClima/SensoresClima2.png";
+import imgSensoresClima3 from "./assets/SensoresClima/SensoresClima3.png";
+import imgSensoresClima4 from "./assets/SensoresClima/SensoresClima4.png";
+import imgSensoresClima5 from "./assets/SensoresClima/SensoresClima5.png";
+import imgSensoresClima6 from "./assets/SensoresClima/SensoresClima6.png";
+
+// WhatsUpEarth – Imágenes
+import imgWhatsUpEarth1 from "./assets/whatsUpEarth/whatsUpEarth1.png";
+import imgWhatsUpEarth2 from "./assets/whatsUpEarth/whatsUpEarth2.png";
+import imgWhatsUpEarth3 from "./assets/whatsUpEarth/whatsUpEarth3.png";
+import imgWhatsUpEarth4 from "./assets/whatsUpEarth/whatsUpEarth4.png";
+import imgWhatsUpEarth5 from "./assets/whatsUpEarth/whatsUpEarth5.png";
+import imgWhatsUpEarth6 from "./assets/whatsUpEarth/whatsUpEarth6.png";
+import imgWhatsUpEarth7 from "./assets/whatsUpEarth/whatsUpEarth7.png";
+import imgWhatsUpEarth8 from "./assets/whatsUpEarth/whatsUpEarth8.png";
+import imgWhatsUpEarth9 from "./assets/whatsUpEarth/whatsUpEarth9.png";
+import imgWhatsUpEarth10 from "./assets/whatsUpEarth/whatsUpEarth10.png";
+import imgWhatsUpEarth11 from "./assets/whatsUpEarth/whatsUpEarth11.png";
+import imgWhatsUpEarth12 from "./assets/whatsUpEarth/whatsUpEarth12.png";
+import imgWhatsUpEarth13 from "./assets/whatsUpEarth/whatsUpEarth13.png";
+import imgWhatsUpEarth15 from "./assets/whatsUpEarth/whatsUpEarth15.png";
+
+// Proyecto Final Redes – Imágenes
+import imgProyecFinRedes1 from "./assets/proyecFinRedes/proyecFinRedes1.png";
+import imgProyecFinRedes2 from "./assets/proyecFinRedes/proyecFinRedes2.png";
+import imgProyecFinRedes3 from "./assets/proyecFinRedes/proyecFinRedes3.png";
+import imgProyecFinRedes4 from "./assets/proyecFinRedes/proyecFinRedes4.png";
+import imgProyecFinRedes5 from "./assets/proyecFinRedes/proyecFinRedes5.png";
+import imgProyecFinRedes6 from "./assets/proyecFinRedes/proyecFinRedes6.png";
+import imgProyecFinRedes7 from "./assets/proyecFinRedes/proyecFinRedes7.png";
+import imgProyecFinRedes8 from "./assets/proyecFinRedes/proyecFinRedes8.png";
+
 // Videos
 import videoIntro from "./assets/optistock/intro.mp4";
 import videoDemo from "./assets/optistock/FuncionamientoOptistock.mp4";
@@ -136,6 +170,15 @@ import videoSucceding2 from "./assets/succedingMedia/succedingMedia1.mp4";
 import videoSucceding3 from "./assets/succedingMedia/succedingMedia2.mp4";
 
 import videoAmazonClone from "./assets/AmazonClone/AmazonClone1.mp4";
+
+// Clima Aula – Video
+import videoSensoresClima from "./assets/SensoresClima/SensoresClimaV.mp4";
+
+// WhatsUpEarth – Video
+import videoWhatsUpEarth from "./assets/whatsUpEarth/whatsUpEarthV.mp4";
+
+// Proyecto Final Redes – Video
+import videoProyecFinRedes from "./assets/proyecFinRedes/proyecFinRedesV.mp4";
 
 
 // PDF (manual o documento de presentación)
@@ -504,6 +547,123 @@ const projects = [
     imgAmazon5,
     imgAmazon6,
     imgAmazon7
+  ]
+},
+  {
+  id: 14,
+  title: "Clima Aula (Monitor Ambiental IoT + Analytics)",
+  description:
+    "Sistema IoT + Web que monitorea en tiempo real las condiciones ambientales de un aula, analiza cumplimiento normativo y se despliega automáticamente vía CI/CD.",
+  details: `Clima Aula es un sistema integral de monitoreo ambiental desarrollado para analizar las condiciones reales de un salón de clases mediante sensores físicos conectados a un ESP32. El sistema registra temperatura, humedad, iluminación y presión atmosférica en tiempo real, almacenando la información en MongoDB para su análisis y visualización.\n\nDispositivos y captura de datos:\n• ESP32 como controlador IoT.\n• BME680: temperatura, humedad y presión atmosférica.\n• DHT22: sensor de respaldo para temperatura y humedad.\n• BH1750: medición de iluminación (lux).\n• Sketch en Arduino encargado de la lectura de sensores, conexión WiFi y envío de datos vía HTTP a la API.\n\nBackend (Node.js + Express + MongoDB):\n• API REST para recepción y consulta de lecturas ambientales.\n• Rutas separadas por tipo de sensor (BME680 y DHT22 + BH1750).\n• Endpoints de análisis:\n  - /api/stats/current → última lectura consolidada en tiempo casi real.\n  - /api/stats/daily → promedios, mínimos y máximos por día.\n  - /api/stats/compliance → porcentaje de cumplimiento vs rangos normativos.\n  - /api/dayle-stats → resúmenes diarios detallados.\n• Uso de Aggregation Pipelines de MongoDB para análisis estadístico eficiente.\n\nFrontend (React):\n• Dashboard con secciones de Panorama actual, Análisis diario, Cumplimiento con normas, Investigación, Investigación extendida e Histórico diario.\n• Visualización clara del estado ambiental (dentro, bajo o fuera de rango).\n• Comparación contra normas internacionales (ASHRAE, OMS, ISO 8995).\n• Exportación de reportes a PDF.\n\nCI/CD y despliegue automatizado:\n• Repositorio dedicado de deploy con GitHub Actions.\n• Workflow que se ejecuta automáticamente al hacer push a la rama main.\n• El pipeline llama a una API privada de despliegue (/deploy) en el servidor.\n• Autenticación mediante secrets (DEPLOY_SECRET) para asegurar el proceso.\n• Permite actualizar el proyecto completo en producción sin intervención manual.\n\nResultado:\nUn proyecto de punta a punta que integra IoT, backend, base de datos, análisis de datos, frontend y DevOps, demostrando captura de datos reales, automatización de despliegue y visualización orientada a la toma de decisiones.`,
+  technologies: [
+    "ESP32",
+    "Arduino",
+    "BME680",
+    "DHT22",
+    "BH1750",
+    "Node.js",
+    "Express",
+    "MongoDB",
+    "Mongoose",
+    "MongoDB Aggregation",
+    "React",
+    "REST API",
+    "GitHub Actions",
+    "CI/CD",
+    "IoT"
+  ],
+  type: "IoT / Web",
+  date: "2025-12-04",
+  repos: {
+    frontend: "https://github.com/SinckCode/clima-web",
+    backend: "https://github.com/SinckCode/SensoresApi",
+    deploy: "https://github.com/SinckCode/climaDeploy",
+    hardware: "https://github.com/SinckCode/SketchArduinoSensoresClima"
+  },
+  demo: "https://clima.angelonesto.com/",
+  video: videoSensoresClima,
+  images: [
+    imgSensoresClima1,
+    imgSensoresClima2,
+    imgSensoresClima3,
+    imgSensoresClima4,
+    imgSensoresClima5,
+    imgSensoresClima6
+  ]
+},
+{
+  id: 15,
+  title: "WhatsUpEarth (NASA EONET Events Dashboard)",
+  description:
+    "Dashboard web interactivo que consume la API EONET de la NASA para visualizar eventos naturales del planeta por categorías, con backend propio y CI/CD vía GitHub Actions.",
+  details: `WhatsUpEarth es una aplicación web informativa que presenta eventos naturales del planeta (incendios, tormentas severas, terremotos, erupciones, etc.) consumiendo la API EONET (Earth Observatory Natural Event Tracker) de la NASA. El objetivo del proyecto es ofrecer información confiable, verificada y accesible mediante una interfaz moderna, agradable y responsiva.\n\nObjetivo del proyecto:\n• Crear e implementar una página web interactiva que brinde información sobre eventos meteorológicos/naturales.\n• Consumir la API EONET de la NASA.\n• Dividir la búsqueda y navegación por categorías.\n• Mantener una UI intuitiva y clara para cualquier usuario.\n\nArquitectura:\n• Frontend: aplicación en React orientada a exploración por categorías, visualización y navegación fluida.\n• Backend: API propia que centraliza el consumo de EONET, normaliza respuestas y facilita el mantenimiento (evita acoplar el frontend directamente a cambios de la API externa).\n\nCI/CD y despliegue automatizado:\n• Repositorio dedicado de deploy con GitHub Actions.\n• El pipeline se ejecuta al hacer push a la rama main.\n• Se realiza un POST a un endpoint privado de despliegue (/deploy) en el servidor, autenticado mediante secrets.\n• Permite actualizar el proyecto en producción sin pasos manuales.\n\nConsideraciones del proyecto (planeación):\n• Supuestos: disponibilidad de EONET, internet estable y compatibilidad de navegadores.\n• Restricciones: solución 100% web, diseño responsivo y desarrollo dentro de un marco de tiempo definido.\n\nResultado:\nProyecto orientado a consumo de APIs externas + arquitectura desacoplada (frontend/backend) + despliegue automatizado, priorizando confiabilidad de la información y experiencia de usuario.`,
+  technologies: [
+    "React",
+    "Node.js",
+    "Express",
+    "REST API",
+    "NASA EONET API",
+    "GitHub Actions",
+    "CI/CD",
+    "Web"
+  ],
+  type: "Web",
+  date: "2025-08-21",
+  repos: {
+    frontend: "https://github.com/SinckCode/whatsup-earth",
+    backend: "https://github.com/SinckCode/Whasup-earthBack",
+    deploy: "https://github.com/SinckCode/Whasup-earthDeploy"
+  },
+  demo: "https://whatsupearth.angelonesto.com/",
+  video: videoWhatsUpEarth,
+  images: [
+    imgWhatsUpEarth1,
+    imgWhatsUpEarth2,
+    imgWhatsUpEarth3,
+    imgWhatsUpEarth4,
+    imgWhatsUpEarth5,
+    imgWhatsUpEarth6,
+    imgWhatsUpEarth7,
+    imgWhatsUpEarth8,
+    imgWhatsUpEarth9,
+    imgWhatsUpEarth10,
+    imgWhatsUpEarth11,
+    imgWhatsUpEarth12,
+    imgWhatsUpEarth13,
+    imgWhatsUpEarth15
+  ]
+},
+{
+  id: 16,
+  title: "Proyecto Final de Redes (Diseño + Subneteo VLSM + Simulación)",
+  description:
+    "Diseño y simulación de red empresarial completa en Cisco Packet Tracer: VLSM, voz/datos, DMZ, enlaces WAN /30 y pruebas de conectividad.",
+  details: `Proyecto final de la materia Fundamentos de Redes y Ruteo, enfocado en el diseño, subneteo, planificación y simulación de una red empresarial completa implementada en Cisco Packet Tracer.\n\nEscenario:\n• Empresa ficticia con 1 sede corporativa y 5 sucursales.\n• Segmentación de red por tráfico de Datos y Voz.\n• Zona DMZ para servidores.\n• Enlaces WAN punto a punto con subredes /30.\n\nDiseño y direccionamiento:\n• Red base 172.16.0.0/16.\n• Subneteo aplicado con VLSM, asignando prefijos según demanda real de hosts.\n• Gateways definidos por subred y enlaces P2P planificados para interconectar routers.\n\nComponentes y topología:\n• Topología jerárquica.\n• Routers interconectados por enlaces /30.\n• Switches de acceso por área.\n• Hosts finales (PCs y teléfonos IP).\n• Servidores en DMZ.\n\nProtocolos y conceptos aplicados:\n• ARP (resolución IP↔MAC) y análisis de tabla ARP durante pruebas.\n• ICMP (ping) para validación de conectividad.\n• TCP/IP y enrutamiento entre subredes.\n• Segmentación lógica (VLAN/voz-datos a nivel de diseño) y aislamiento por subred.\n\nPruebas realizadas:\n• Ping intra-subred e inter-subred.\n• Verificación de gateways.\n• Acceso a servicios en DMZ.\n• Validación de enlaces P2P WAN.\n\nResultado:\nRed completamente funcional y documentada, con direccionamiento eficiente, segmentación y conectividad estable entre sedes.`,
+  technologies: [
+    "Cisco Packet Tracer",
+    "Networking",
+    "VLSM",
+    "Subnetting",
+    "DMZ",
+    "WAN /30 (P2P)",
+    "TCP/IP",
+    "ARP",
+    "ICMP",
+    "Routing"
+  ],
+  type: "Networking",
+  date: "2025-11-11",
+  demo: "https://github.com/SinckCode/RedesProyecFinal",
+  video: videoProyecFinRedes,
+  images: [
+    imgProyecFinRedes1,
+    imgProyecFinRedes2,
+    imgProyecFinRedes3,
+    imgProyecFinRedes4,
+    imgProyecFinRedes5,
+    imgProyecFinRedes6,
+    imgProyecFinRedes7,
+    imgProyecFinRedes8
   ]
 }
 ];

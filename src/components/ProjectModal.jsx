@@ -114,6 +114,9 @@ const ProjectModal = ({ project, onClose }) => {
           {project.api?.empresas && (
             <a href={project.api.empresas} target="_blank" rel="noopener noreferrer">🏢 API Empresas</a>
           )}
+          {project.repos?.deploy && (
+            <a href={project.repos.deploy} target="_blank" rel="noopener noreferrer">🚀 API Deploy</a>
+          )}
         </div>
 
         {/* 🧾 Descripción */}
