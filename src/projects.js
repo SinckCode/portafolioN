@@ -140,6 +140,22 @@ import imgProyecFinRedes6 from "./assets/proyecFinRedes/proyecFinRedes6.png";
 import imgProyecFinRedes7 from "./assets/proyecFinRedes/proyecFinRedes7.png";
 import imgProyecFinRedes8 from "./assets/proyecFinRedes/proyecFinRedes8.png";
 
+// MyGameShelf – Imágenes
+import imgMyGameShelf1 from "./assets/MyGameShelf/MyGameShelf1.png";
+import imgMyGameShelf2 from "./assets/MyGameShelf/MyGameShelf2.png";
+import imgMyGameShelf3 from "./assets/MyGameShelf/MyGameShelf3.png";
+import imgMyGameShelf4 from "./assets/MyGameShelf/MyGameShelf4.png";
+import imgMyGameShelf5 from "./assets/MyGameShelf/MyGameShelf5.png";
+import imgMyGameShelf6 from "./assets/MyGameShelf/MyGameShelf6.png";
+import imgMyGameShelf7 from "./assets/MyGameShelf/MyGameShelf7.png";
+import imgMyGameShelf8 from "./assets/MyGameShelf/MyGameShelf8.png";
+import imgMyGameShelf9 from "./assets/MyGameShelf/MyGameShelf9.png";
+import imgMyGameShelf10 from "./assets/MyGameShelf/MyGameShelf10.png";
+import imgMyGameShelf11 from "./assets/MyGameShelf/MyGameShelf11.png";
+import imgMyGameShelf12 from "./assets/MyGameShelf/MyGameShelf12.png";
+
+
+
 // Videos
 import videoIntro from "./assets/optistock/intro.mp4";
 import videoDemo from "./assets/optistock/FuncionamientoOptistock.mp4";
@@ -180,6 +196,8 @@ import videoWhatsUpEarth from "./assets/whatsUpEarth/whatsUpEarthV.mp4";
 // Proyecto Final Redes – Video
 import videoProyecFinRedes from "./assets/proyecFinRedes/proyecFinRedesV.mp4";
 
+// MyGameShelf – Video
+import videoMyGameShelf from "./assets/MyGameShelf/MyGameShelfV.mp4";
 
 // PDF (manual o documento de presentación)
 //import pdfCRECIBV from "./assets/Crecibv/CRECIBV.pdf";
@@ -608,7 +626,7 @@ const projects = [
     "Web"
   ],
   type: "Web",
-  date: "2025-08-21",
+  date: "2025-11-15",
   repos: {
     frontend: "https://github.com/SinckCode/whatsup-earth",
     backend: "https://github.com/SinckCode/Whasup-earthBack",
@@ -665,7 +683,50 @@ const projects = [
     imgProyecFinRedes7,
     imgProyecFinRedes8
   ]
+},{
+  id: 17,
+  title: "MyGameShelf (Android App + API en Vapor)",
+  description:
+    "App Android con Jetpack Compose (MVVM) que consume una API propia en tiempo real para gestionar y explorar videojuegos, con navegación, estados de carga/error y UI moderna.",
+  details: `MyGameShelf es una aplicación Android desarrollada con Jetpack Compose (y enfoque modular tipo KMP/MVVM) que consume en tiempo real una API propia para mostrar información de videojuegos y permitir una experiencia de navegación intuitiva en múltiples pantallas.\n\nRequerimientos cumplidos (examen/proyecto):\n• Consumo de API en tiempo real, con manejo de estados: loading, success y error.\n• Arquitectura con separación de responsabilidades y estructura de carpetas.\n• Patrones y buenas prácticas: MVVM, Inyección de dependencias (o patrón de provisión de dependencias), Singleton para servicios compartidos, y componentes reutilizables.\n• Navegación entre 4 pantallas implementada con Jetpack Compose Navigation.\n• UI moderna centrada en el usuario: tipografía, espaciado, jerarquía visual, imágenes y colores alineados a la temática.\n• Personalización de componentes de Compose y uso de animaciones/transiciones para mejorar la experiencia.\n\nAPI y despliegue:\n• API desarrollada con Vapor (Swift) y expuesta como REST.\n• La API está alojada en mi infraestructura (servidor Proxmox), publicada con dominio propio.\n• Endpoint productivo: https://mygameshelf.angelonesto.com/\n\nEntrega:\n• Repositorio de la app + repositorio de la API.\n• Video demostrativo mostrando el funcionamiento completo.`,
+  technologies: [
+    "Android",
+    "Jetpack Compose",
+    "Compose Navigation",
+    "Kotlin",
+    "MVVM",
+    "Dependency Injection",
+    "REST API",
+    "Vapor (Swift)",
+    "Proxmox",
+    "UI/UX",
+    "Animations"
+  ],
+  type: "Mobile / Fullstack",
+  date: "2025-11-25",
+  repos: {
+    frontend: "https://github.com/SinckCode/MyGameShelf",
+    backend: "https://github.com/SinckCode/MyGameShelfApi"
+  },
+  api: "https://mygameshelf.angelonesto.com/",
+  demo: "https://drive.google.com/file/d/1R6IRyEoMcF35Gg9nFtdck4VuUr9hKaU4/view?usp=sharing",
+  video: videoMyGameShelf,
+  images: [
+    imgMyGameShelf1,
+    imgMyGameShelf2,
+    imgMyGameShelf3,
+    imgMyGameShelf4,
+    imgMyGameShelf5,
+    imgMyGameShelf6,
+    imgMyGameShelf7,
+    imgMyGameShelf8,
+    imgMyGameShelf9,
+    imgMyGameShelf10,
+    imgMyGameShelf11,
+    imgMyGameShelf12
+  ]
 }
+
 ];
 
 
