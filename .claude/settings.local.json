@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find \"E:\\\\NEGOCIOS\\\\mi-portfolio-3d\\\\stitch_ao_full_stack_portfolio\" -type f -exec ls -lh {} \\\\;)",
+      "Bash(awk '{print $5, $9}')",
+      "Bash(find E:\\\\Universidad\\\\serverProxmox:*)",
+      "Bash(xargs grep:*)",
+      "Bash(grep -E \"\\\\.py$\")",
+      "Bash(ssh:*)",
+      "Bash(npm install:*)",
+      "Bash(npx next:*)",
+      "Bash(npx nest:*)",
+      "Bash(docker compose:*)",
+      "Bash(curl -s http://localhost:4000/api)",
+      "Read(//dev/**)",
+      "Bash(npx ts-node:*)",
+      "Bash(curl -s http://localhost:4000/)",
+      "Bash(taskkill:*)",
+      "Bash(echo \"API starting PID: $!\" sleep 10 curl -s http://localhost:4000/api/projects)",
+      "Bash(curl:*)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'Projects: {d[\\\\\"total\\\\\"]}'\\); [print\\(f'  - {p[\\\\\"title\\\\\"]}'\\) for p in d['data'][:5]]\")",
+      "Bash(echo \"Frontend PID: $!\")",
+      "Bash(xargs ls:*)",
+      "Bash(ls E:/NEGOCIOS/mi-portfolio-3d/portfolio-frontend/src/app/blog/[slug]/)",
+      "Bash(ls E:/NEGOCIOS/mi-portfolio-3d/portfolio-frontend/src/app/cursos/[slug]/)",
+      "Bash(grep -rl \"bg-black\" src/app/ --include=\"*.tsx\")",
+      "Bash(grep -rl \"text-\\\\[#8a9bb0\\\\]\" src/app/ --include=\"*.tsx\")",
+      "Bash(grep -rl \"text-\\\\[#aaaaaa\\\\]\" src/ --include=\"*.tsx\")",
+      "Bash(grep -rl \"bg-black\\\\|text-\\\\[#8a9bb0\\\\]\\\\|text-\\\\[#aaaaaa\\\\]\\\\|text-\\\\[#666666\\\\]\" src/components/ --include=\"*.tsx\")",
+      "Bash(echo \"Dev server PID: $!\")",
+      "Bash(cp -r E:/NEGOCIOS/mi-portfolio-3d/src/assets/AmazonClone E:/NEGOCIOS/mi-portfolio-3d/portfolio-frontend/public/projects/)",
+      "Bash(cp -r E:/NEGOCIOS/mi-portfolio-3d/src/assets/Crecibv E:/NEGOCIOS/mi-portfolio-3d/portfolio-frontend/public/projects/)",
+      "Bash(cp -r E:/NEGOCIOS/mi-portfolio-3d/src/assets/LibreriaApi E:/NEGOCIOS/mi-portfolio-3d/portfolio-frontend/public/projects/)",
+      "Bash(cp -r E:/NEGOCIOS/mi-portfolio-3d/src/assets/MyGameShelf E:/NEGOCIOS/mi-portfolio-3d/portfolio-frontend/public/projects/)",
+      "Bash(cp -r E:/NEGOCIOS/mi-portfolio-3d/src/assets/OrgSync E:/NEGOCIOS/mi-portfolio-3d/portfolio-frontend/public/projects/)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}

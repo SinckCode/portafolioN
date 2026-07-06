@@ -21,3 +21,29 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# === monorepo: subapps ===
+**/node_modules
+portfolio-frontend/.next
+portfolio-frontend/out
+portfolio-api/dist
+infra/deploy-api/node_modules
+
+# === secretos (NUNCA subir) ===
+.env
+.env.production
+portfolio-api/.env
+portfolio-api/.env.production
+portfolio-frontend/.env.production
+portfolio-frontend/.env.local
+infra/deploy-api/.env
+
+# === uploads en runtime ===
+portfolio-api/uploads
+
+# === media pesada (se sincroniza por rsync a la VM, no a git) ===
+portfolio-frontend/public/portafolio.glb
+portfolio-frontend/public/projects/**/*.mp4
+
+# archivo temporal de trabajo
+infra/deploy-api-server.current.js

@@ -1,0 +1,13 @@
+---
+# Copia este archivo como vault.yml y encriptalo con:
+#   ansible-vault encrypt group_vars/vault.yml
+#
+# Para editar despues:
+#   ansible-vault edit group_vars/vault.yml
+
+vault_mongodb_password: "TU_PASSWORD_MONGODB_AQUI"
+vault_deploy_token: "TU_TOKEN_DEPLOY_AQUI"
+vault_jwt_secret: "TU_JWT_SECRET_AQUI"
+vault_jwt_refresh_secret: "TU_JWT_REFRESH_SECRET_AQUI"
+vault_smtp_user: "tu_email@gmail.com"
+vault_smtp_pass: "TU_APP_PASSWORD_GMAIL"

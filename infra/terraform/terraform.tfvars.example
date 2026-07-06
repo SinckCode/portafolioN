@@ -1,0 +1,12 @@
+proxmox_api_url  = "https://10.10.20.1:8006/api2/json"
+proxmox_user     = "root@pam"
+proxmox_password = "CHANGE_ME"
+proxmox_node     = "pve"
+template_name    = "ubuntu-2404-template"
+vm_cores         = 4
+vm_memory        = 4096
+vm_disk_size     = "30G"
+storage_pool     = "local-lvm"
+ci_user          = "onesto"
+ci_password      = "CHANGE_ME"
+ssh_public_key   = "ssh-rsa AAAA..."

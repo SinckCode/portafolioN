@@ -1,0 +1,101 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test-api:
+    name: Lint & Test API
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: portfolio-api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: portfolio-api/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test
+      - run: npm audit --audit-level=high
+
+  lint-and-test-frontend:
+    name: Lint & Test Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: portfolio-frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: portfolio-frontend/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  security-scan:
+    name: OWASP ZAP Baseline
+    needs: [lint-and-test-api, lint-and-test-frontend]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.13.0
+        with:
+          target: ${{ secrets.API_URL || 'https://api.angelonesto.com' }}
+          rules_file_name: 'security-tests/zap-baseline.conf'
+          allow_issue_writing: false
+
+  deploy-api:
+    name: Deploy API
+    needs: [lint-and-test-api]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Deploy via Deploy API
+        run: |
+          curl -sf -X POST \
+            "https://deploy.angelonesto.com/deploy/portfolio-api" \
+            -H "Authorization: Bearer ${{ secrets.DEPLOY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --max-time 120
+
+      - name: Verify deployment
+        run: |
+          sleep 10
+          curl -sf "https://api.angelonesto.com/health" --max-time 10
+
+  deploy-frontend:
+    name: Deploy Frontend
+    needs: [lint-and-test-frontend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Deploy via Deploy API
+        run: |
+          curl -sf -X POST \
+            "https://deploy.angelonesto.com/deploy/portfolio-frontend" \
+            -H "Authorization: Bearer ${{ secrets.DEPLOY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --max-time 600
+
+      - name: Verify deployment
+        run: |
+          sleep 15
+          curl -sf "https://angelonesto.com" --max-time 10

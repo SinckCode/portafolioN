@@ -1,58 +1,166 @@
 import React from "react";
 import { motion } from "framer-motion";
+import Icon from "./ui/Icon";
+import SectionHeading from "./ui/SectionHeading";
+import { getTechColor } from "../utils/techColors";
 import pixelAvatar from "../assets/pixel-avatar.png";
 import "../estilos/AboutSection.css";
 
+const SPECIALTIES = [
+  {
+    icon: "code",
+    title: "Desarrollo Web y Backend",
+    description:
+      "APIs con Express, FastAPI y Vapor; interfaces modernas con React, SwiftUI y Electron; bases de datos MySQL, SQLite y T-SQL.",
+  },
+  {
+    icon: "cloud",
+    title: "DevOps y Despliegue",
+    description:
+      "Pipelines con Docker y GitHub Actions; despliegues en DigitalOcean, Vercel, Render y Firebase.",
+  },
+  {
+    icon: "server",
+    title: "Infraestructura",
+    description:
+      "Servidores virtualizados con Proxmox VE; Windows Server (Active Directory, DNS, DHCP); redes híbridas.",
+  },
+  {
+    icon: "cpu",
+    title: "IoT e Integración",
+    description:
+      "Sensores, lógica embebida y servicios web: el mundo físico conectado con el digital.",
+  },
+  {
+    icon: "git-branch",
+    title: "Control de Versiones",
+    description:
+      "Git y GitHub en entornos colaborativos y personales, con flujos de trabajo ordenados.",
+  },
+];
+
+const STACK = [
+  "React",
+  "Node.js",
+  "Express",
+  "FastAPI",
+  "SwiftUI",
+  "Docker",
+  "GitHub Actions",
+  "MySQL",
+  "MongoDB",
+  "Firebase",
+  "DigitalOcean",
+  "Proxmox",
+];
+
+const container = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.1 } },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 32 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1] },
+  },
+};
+
 const AboutSection = () => (
-  <section id="about">
-    <motion.div
-      initial={{ opacity: 0, y: 50 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8 }}
-      className="about-content"
-    >
-      <div className="avatar-wrapper">
-        <img src={pixelAvatar} alt="Pixel Art Avatar" />
-      </div>
-      <h2>Sobre Mí</h2>
-<p>
-  Soy estudiante de Ingeniería en Software y Sistemas Computacionales en La Salle Bajío, con formación técnica previa en Programación por el CBTIS 65. Desde entonces, he trabajado de forma constante en el desarrollo de soluciones tecnológicas reales, combinando programación, diseño de interfaces, despliegue y administración de sistemas.
-</p>
-<p>
-  Tengo experiencia práctica desarrollando proyectos full stack, creando APIs con Express, FastAPI y Vapor, y construyendo interfaces modernas con React, SwiftUI y Electron. Además, he implementado soluciones en la nube utilizando Docker, GitHub Actions, Firebase, DigitalOcean y Vercel.
-</p>
-<p>
- Me apasiona diseñar sistemas completos: desde la estructura de base de datos hasta la interfaz de usuario, pasando por la lógica del backend y flujos DevOps para despliegues confiables. Disfruto integrar el mundo físico con el digital, conectando componentes embebidos con plataformas modernas.
-</p>
-<p>
-  Busco una oportunidad para integrarme a un equipo profesional donde pueda seguir creciendo, aprender de los mejores y aportar mis conocimientos técnicos, creatividad y compromiso para construir soluciones útiles, funcionales y bien estructuradas.
-</p>
+  <section id="about" className="about-section">
+    <div className="about-inner">
+      <SectionHeading
+        kicker="Sobre mí"
+        title="Construyo soluciones completas"
+        subtitle="Del diseño de la base de datos a la interfaz, pasando por el backend, el despliegue y el hardware cuando hace falta."
+      />
 
+      <motion.div
+        className="about-grid"
+        variants={container}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+      >
+        <motion.div className="about-avatar-col" variants={item}>
+          <div className="avatar-card">
+            <img
+              src={pixelAvatar}
+              alt="Avatar pixel art de Ángel David Onesto Frías"
+            />
+          </div>
+          <span className="avatar-caption">pixel · art · avatar</span>
+        </motion.div>
 
-      <h3>Áreas de Especialización</h3>
-<ul>
-  <li>
-    <strong>Desarrollo Web y Backend:</strong> Creación de APIs y aplicaciones con Node.js (Express), FastAPI y Vapor; desarrollo de interfaces modernas con React, SwiftUI y Electron; manejo de bases de datos SQL como MySQL, SQLite y T-SQL.
-  </li>
-  <li>
-    <strong>DevOps y Despliegue:</strong> Automatización e implementación de pipelines con Docker, GitHub Actions; despliegue en plataformas como DigitalOcean, Vercel, Render y Firebase.
-  </li>
-  <li>
-    <strong>Infraestructura:</strong> Administración de servidores virtualizados con Proxmox VE; configuración de servicios en Windows Server (Active Directory, DNS, DHCP); diseño de redes híbridas y entornos virtuales.
-  </li>
-<li>
-  <strong>IoT e Integración:</strong> Uniendo el mundo físico con el digital mediante la orquestación de sensores, lógica embebida y servicios web.
-</li>
+        <motion.div className="about-bio" variants={item}>
+          <p className="about-lead">
+            Soy estudiante de Ingeniería en Software y Sistemas Computacionales
+            en La Salle Bajío, con formación técnica previa en Programación por
+            el CBTIS 65. Desde entonces desarrollo soluciones tecnológicas
+            reales que combinan programación, diseño de interfaces, despliegue
+            y administración de sistemas.
+          </p>
+          <p>
+            Tengo experiencia práctica en proyectos full stack: APIs con
+            Express, FastAPI y Vapor, interfaces modernas con React, SwiftUI y
+            Electron, y soluciones en la nube con Docker, GitHub Actions,
+            Firebase, DigitalOcean y Vercel.
+          </p>
+          <p>
+            Me apasiona diseñar sistemas completos, integrar el mundo físico
+            con el digital y mantener una mejora continua. Busco integrarme a
+            un equipo profesional donde pueda seguir creciendo y aportar
+            conocimiento técnico, creatividad y compromiso.
+          </p>
+        </motion.div>
+      </motion.div>
 
-  <li>
-    <strong>Control de Versiones:</strong> Uso eficiente de Git y GitHub en entornos colaborativos y personales.
-  </li>
-</ul>
-<p>
-  Me motiva desarrollar soluciones completas que conecten el software con la infraestructura. Disfruto integrar hardware cuando el proyecto lo requiere, desplegar servicios propios y mantener una mejora continua en lo técnico y profesional.
-</p>
+      <motion.div
+        className="about-specialties"
+        variants={container}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.15 }}
+      >
+        <motion.h3 className="about-subtitle" variants={item}>
+          Áreas de especialización
+        </motion.h3>
+        <div className="specialty-grid">
+          {SPECIALTIES.map((spec) => (
+            <motion.article key={spec.title} className="specialty-card" variants={item}>
+              <span className="specialty-card__icon" aria-hidden="true">
+                <Icon name={spec.icon} size={22} strokeWidth={1.75} />
+              </span>
+              <h4>{spec.title}</h4>
+              <p>{spec.description}</p>
+            </motion.article>
+          ))}
+        </div>
+      </motion.div>
 
-    </motion.div>
+      <motion.div
+        className="about-stack"
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.4 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      >
+        <span className="about-stack__label">Stack principal</span>
+        <div className="about-stack__chips">
+          {STACK.map((tech) => (
+            <span
+              key={tech}
+              className="about-stack__chip"
+              style={{ "--tag-color": getTechColor(tech) }}
+            >
+              {tech}
+            </span>
+          ))}
+        </div>
+      </motion.div>
+    </div>
   </section>
 );
 

@@ -1,0 +1,139 @@
+// ============================================
+// Design System — Variables
+// Paleta portada del rediseño premium de la SPA
+// (referencia: ../src/estilos/tokens.css del CRA)
+// ============================================
+
+// --- Background / Surface Layers ---
+$background: #030405; // --bg-base
+$surface-dim: #030405;
+$surface: #030405;
+$surface-bright: #262a33;
+$surface-container-lowest: #0a0c10; // --bg-raised
+$surface-container-low: #0f1115; // --bg-surface
+$surface-container: #14171d; // --bg-elevated
+$surface-container-high: #1a1c22; // --bg-panel
+$surface-container-highest: #21242c;
+$surface-variant: #1a1c22;
+
+// Card / input-level surfaces
+$surface-card: #14171d; // --bg-elevated
+$surface-input: #1a1c22; // --bg-panel
+
+// --- Primary (escala cyan de la SPA) ---
+$primary: #48cae4; // --cyan-300
+$primary-container: #00b4d8; // --cyan-400 (base de marca)
+$primary-fixed: #b8ecf7; // --cyan-100
+$primary-fixed-dim: #7fdcef; // --cyan-200
+$on-primary: #02131a; // --text-on-accent
+$on-primary-container: #023e5a; // --cyan-700
+$inverse-primary: #0077b6; // --cyan-600
+$surface-tint: #48cae4;
+$primary-strong: #0096c7; // --cyan-500
+$primary-soft: rgba(0, 180, 216, 0.12); // --color-primary-soft
+$primary-border: rgba(0, 180, 216, 0.35); // --color-primary-border
+
+// --- Secondary (cyan suave) ---
+$secondary: #7fdcef;
+$secondary-container: #023e5a;
+$on-secondary: #02131a;
+$on-secondary-container: #b8ecf7;
+
+// --- Tertiary (naranja hardware) ---
+$tertiary: #fb923c;
+$tertiary-container: #fb923c;
+$on-tertiary: #4d2600;
+
+// --- Text ---
+$on-surface: #f4f7f9; // --text-primary
+$on-background: #f4f7f9;
+$on-surface-variant: #b6bec7; // --text-secondary
+$outline: #8b939e; // --text-muted
+$outline-variant: rgba(255, 255, 255, 0.08); // --glass-border
+
+// --- Borders ---
+$border-default: rgba(255, 255, 255, 0.08); // --glass-border
+$border-hover: rgba(0, 180, 216, 0.35); // --color-primary-border
+
+// --- Semantic / Status ---
+$error: #ff5470; // --color-error
+$error-container: #93000a;
+$on-error: #690005;
+$on-error-container: #ffdad6;
+$success: #2dd4a7; // --color-success
+$warning: #ffc857; // --color-warning
+$info: #48cae4;
+
+// --- Tags por categoría tecnológica ---
+$tag-frontend: #48cae4;
+$tag-backend: #a78bfa;
+$tag-db: #ffc857;
+$tag-devops: #2dd4a7;
+$tag-mobile: #f472b6;
+$tag-hardware: #fb923c;
+$tag-other: #94a3b8;
+
+// --- Typography (fuentes cargadas con next/font en layout.tsx) ---
+$font-family: var(--font-body), 'Inter', system-ui, -apple-system, sans-serif;
+$font-display: var(--font-display), 'Space Grotesk', sans-serif;
+$font-mono: var(--font-mono), 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+
+$font-size-h1: 3.25rem;
+$font-size-h1-mobile: 2.25rem;
+$font-size-h2: 2rem;
+$font-size-h3: 1.5rem;
+$font-size-body: 1rem;
+$font-size-body-sm: 0.875rem;
+$font-size-label: 0.75rem;
+
+$font-weight-h1: 700;
+$font-weight-h2: 700;
+$font-weight-h3: 600;
+$font-weight-body: 400;
+$font-weight-label: 600;
+
+$line-height-h1: 1.1;
+$line-height-h2: 1.2;
+$line-height-h3: 1.4;
+$line-height-body: 1.6;
+$line-height-body-sm: 1.5;
+
+$letter-spacing-h1: -0.02em;
+$letter-spacing-label: 0.12em;
+
+// --- Spacing ---
+$spacing-base: 4px;
+$spacing-gutter: 24px;
+$spacing-margin-mobile: 16px;
+$spacing-margin-desktop: 64px;
+$max-width: 1200px;
+
+// --- Border Radius (escala de la SPA) ---
+$radius-sm: 6px;
+$radius-md: 8px;
+$radius-lg: 12px;
+$radius-xl: 16px;
+$radius-2xl: 20px;
+$radius-full: 9999px;
+
+// --- Shadows & Effects (glows de la SPA) ---
+$glow-cyan: 0 0 24px rgba(0, 180, 216, 0.35); // --glow-md
+$glow-cyan-subtle: 0 0 12px rgba(0, 180, 216, 0.25); // --glow-sm
+$glow-cyan-strong: 0 0 48px rgba(0, 180, 216, 0.45); // --glow-lg
+$shadow-1: 0 4px 12px rgba(0, 0, 0, 0.45);
+$shadow-2: 0 12px 32px rgba(0, 0, 0, 0.55);
+
+// --- Z-index ---
+$z-background: -1;
+$z-content: 1;
+$z-sticky: 10;
+$z-header: 50;
+$z-overlay: 40;
+$z-modal: 100;
+
+// --- Transitions (easing de la SPA) ---
+$ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+$transition-fast: 160ms ease;
+$transition-base: 300ms $ease-out;
+$transition-slow: 550ms $ease-out;
+$transition-colors: color 300ms ease, background-color 300ms ease, border-color 300ms ease;

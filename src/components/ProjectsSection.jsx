@@ -1,7 +1,10 @@
-import React, { useState, useRef, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
+import { AnimatePresence } from "framer-motion";
 import ProjectCard from "./ProjectCard";
 import ProjectModal from "./ProjectModal";
 import FilterPanel from "./FilterPanel";
+import EmptyState from "./ui/EmptyState";
+import SectionHeading from "./ui/SectionHeading";
 import projects from "../projects";
 import "../estilos/ProjectsSection.css";
 
@@ -9,11 +12,14 @@ const ProjectsSection = () => {
   const [selectedTechs, setSelectedTechs] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState("recent");
-  const [activeProject, setActiveProject] = useState(null);
   const [showOnlyWithDemo, setShowOnlyWithDemo] = useState(false);
+  // Índice dentro de filteredProjects (no el objeto) para poder navegar prev/next
+  const [activeIndex, setActiveIndex] = useState(null);
 
-  const carouselRef = useRef(null);
-  const allTechs = [...new Set(projects.flatMap((p) => p.technologies))];
+  const allTechs = useMemo(
+    () => [...new Set(projects.flatMap((p) => p.technologies))],
+    []
+  );
 
   const handleTechToggle = (tech) => {
     setSelectedTechs((prev) =>
@@ -26,26 +32,6 @@ const ProjectsSection = () => {
     setSearchQuery("");
     setSortOrder("recent");
     setShowOnlyWithDemo(false);
-  };
-
-  const handleSearch = (query) => {
-    setSearchQuery(query);
-  };
-
-  const handleSort = (order) => {
-    setSortOrder(order);
-  };
-
-  const handleToggleDemoFilter = () => {
-    setShowOnlyWithDemo((prev) => !prev);
-  };
-
-  const handleOpenModal = (project) => {
-    setActiveProject(project);
-  };
-
-  const handleCloseModal = () => {
-    setActiveProject(null);
   };
 
   const filteredProjects = useMemo(() => {
@@ -80,39 +66,97 @@ const ProjectsSection = () => {
     return result;
   }, [selectedTechs, searchQuery, sortOrder, showOnlyWithDemo]);
 
+  const handleOpenModal = useCallback(
+    (project) => {
+      const index = filteredProjects.findIndex((p) => p.id === project.id);
+      setActiveIndex(index >= 0 ? index : null);
+    },
+    [filteredProjects]
+  );
+
+  const handleCloseModal = useCallback(() => setActiveIndex(null), []);
+
+  // Navegación entre proyectos dentro de la lista filtrada, con wrap-around
+  const handleNavigate = useCallback(
+    (delta) => {
+      setActiveIndex((prev) => {
+        if (prev === null || filteredProjects.length === 0) return prev;
+        return (prev + delta + filteredProjects.length) % filteredProjects.length;
+      });
+    },
+    [filteredProjects.length]
+  );
+
+  const activeProject =
+    activeIndex !== null ? filteredProjects[activeIndex] : null;
+
   return (
     <section className="projects-section" id="portfolio">
-      <div className="section-header">
-        <h2>🎮 Mi trayectoria en código</h2>
-        <p>Cada proyecto aquí es una historia: algunas nacieron por curiosidad, otras para resolver problemas reales. Son fragmentos de mi crecimiento como desarrollador, donde la lógica se cruza con la pasión por crear.</p>
+      <div className="projects-inner">
+        <SectionHeading
+          kicker="Portafolio"
+          title="Mi trayectoria en código"
+          subtitle="Cada proyecto aquí es una historia: algunas nacieron por curiosidad, otras para resolver problemas reales. Son fragmentos de mi crecimiento como desarrollador, donde la lógica se cruza con la pasión por crear."
+        />
+
+        <FilterPanel
+          allTechs={allTechs}
+          selectedTechs={selectedTechs}
+          onToggle={handleTechToggle}
+          onClear={handleClearFilters}
+          searchQuery={searchQuery}
+          onSearch={setSearchQuery}
+          sortOrder={sortOrder}
+          onSort={setSortOrder}
+          showOnlyWithDemo={showOnlyWithDemo}
+          onToggleDemoFilter={() => setShowOnlyWithDemo((prev) => !prev)}
+          resultsCount={filteredProjects.length}
+          totalCount={projects.length}
+        />
+
+        {filteredProjects.length === 0 ? (
+          <EmptyState
+            title="No encontré proyectos con esos filtros"
+            description="Prueba con otra búsqueda o quita algunos filtros para volver a ver todos los proyectos."
+            actionLabel="Limpiar filtros"
+            onAction={handleClearFilters}
+          />
+        ) : (
+          <div className="projects-grid">
+            <AnimatePresence mode="popLayout">
+              {filteredProjects.map((project, index) => (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  featured={index === 0}
+                  onClick={handleOpenModal}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
 
-      <FilterPanel
-        allTechs={allTechs}
-        selectedTechs={selectedTechs}
-        onToggle={handleTechToggle}
-        onClear={handleClearFilters}
-        onSearch={handleSearch}
-        onSort={handleSort}
-        showOnlyWithDemo={showOnlyWithDemo}
-        onToggleDemoFilter={handleToggleDemoFilter}
-      />
-
-      <div className="carousel-wrapper">
-        <div className="projects-grid" ref={carouselRef}>
-          {filteredProjects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              onClick={handleOpenModal}
-            />
-          ))}
-        </div>
-      </div>
-
-      {activeProject && (
-        <ProjectModal project={activeProject} onClose={handleCloseModal} />
-      )}
+      <AnimatePresence>
+        {activeProject && (
+          <ProjectModal
+            project={activeProject}
+            index={activeIndex}
+            total={filteredProjects.length}
+            prevProject={
+              filteredProjects[
+                (activeIndex - 1 + filteredProjects.length) %
+                  filteredProjects.length
+              ]
+            }
+            nextProject={
+              filteredProjects[(activeIndex + 1) % filteredProjects.length]
+            }
+            onClose={handleCloseModal}
+            onNavigate={handleNavigate}
+          />
+        )}
+      </AnimatePresence>
     </section>
   );
 };

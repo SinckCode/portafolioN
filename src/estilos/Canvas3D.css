@@ -1,0 +1,61 @@
+.canvas3d-mount {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-canvas);
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 15%, rgba(2, 62, 90, 0.35), transparent 65%),
+    var(--bg-base);
+}
+
+.canvas3d-mount canvas {
+  display: block;
+  transition: opacity var(--dur-base) linear;
+}
+
+/* --- Fallback sin WebGL: gradiente + partículas CSS --- */
+
+.canvas-fallback {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-canvas);
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 15%, rgba(2, 62, 90, 0.45), transparent 65%),
+    radial-gradient(ellipse 60% 50% at 80% 80%, rgba(0, 119, 182, 0.18), transparent 70%),
+    var(--bg-base);
+}
+
+.canvas-fallback__particle {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--cyan-400);
+  opacity: 0.35;
+  animation-name: particle-float;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+@keyframes particle-float {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.35;
+  }
+  90% {
+    opacity: 0.35;
+  }
+  100% {
+    transform: translateY(-40vh) scale(0.6);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canvas-fallback__particle {
+    animation: none;
+    opacity: 0.2;
+  }
+}

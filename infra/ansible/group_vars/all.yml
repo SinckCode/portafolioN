@@ -1,0 +1,23 @@
+---
+node_version: "20"
+app_user: onesto
+app_dir: /home/onesto
+
+portfolio_api_repo: https://github.com/SinckCode/portfolio-api.git
+portfolio_frontend_repo: https://github.com/SinckCode/portfolio-frontend.git
+
+mongodb_host: 10.10.30.101
+mongodb_port: 27017
+mongodb_user: admin
+mongodb_password: "{{ vault_mongodb_password }}"
+mongodb_database: portfolio
+
+redis_port: 6379
+grafana_port: 3003
+loki_port: 3100
+
+deploy_api_token: "{{ vault_deploy_token }}"
+
+domain: angelonesto.com
+api_domain: api.angelonesto.com
+deploy_domain: deploy.angelonesto.com

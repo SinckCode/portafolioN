@@ -1,0 +1,116 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Requests por Minuto",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service=\"portfolio-api\"} | json | method != \"\" [1m])) by (method)",
+          "legendFormat": "{{method}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 10, "lineWidth": 2 }
+        }
+      }
+    },
+    {
+      "title": "Errores por Endpoint",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum by (url, statusCode) (count_over_time({service=\"portfolio-api\"} | json | statusCode >= 400 [24h]))",
+          "legendFormat": "{{url}} - {{statusCode}}"
+        }
+      ]
+    },
+    {
+      "title": "Latencia P50/P95/P99",
+      "type": "gauge",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "quantile_over_time(0.95, {service=\"portfolio-api\"} | json | unwrap responseTime [5m]) by ()",
+          "legendFormat": "P95"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 200 },
+              { "color": "red", "value": 1000 }
+            ]
+          },
+          "unit": "ms",
+          "max": 2000
+        }
+      }
+    },
+    {
+      "title": "Auth Events",
+      "type": "barchart",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum by (url) (count_over_time({service=\"portfolio-api\"} | json | url =~ \"/auth/.*\" [1h]))",
+          "legendFormat": "{{url}}"
+        }
+      ]
+    },
+    {
+      "title": "Logs en Vivo",
+      "type": "logs",
+      "gridPos": { "h": 10, "w": 16, "x": 0, "y": 14 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "{service=\"portfolio-api\"}",
+          "legendFormat": ""
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "sortOrder": "Descending",
+        "enableLogDetails": true,
+        "showLabels": true
+      }
+    },
+    {
+      "title": "Top 10 Endpoints Mas Lentos",
+      "type": "table",
+      "gridPos": { "h": 10, "w": 8, "x": 16, "y": 14 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "topk(10, avg by (url) (avg_over_time({service=\"portfolio-api\"} | json | unwrap responseTime [24h])))",
+          "legendFormat": "{{url}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms" }
+      }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["portfolio", "api", "monitoring"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "title": "Portfolio API Dashboard",
+  "uid": "portfolio-api-dashboard"
+}

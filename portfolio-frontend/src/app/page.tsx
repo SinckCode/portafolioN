@@ -1,0 +1,67 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+import Header from '@/components/Header';
+import HeroSection from '@/components/HeroSection';
+import AboutSection from '@/components/AboutSection';
+import ServicesSection from '@/components/ServicesSection';
+import ProjectsSection from '@/components/ProjectsSection';
+import BlogPreviewSection from '@/components/BlogPreviewSection';
+import ContactSection from '@/components/ContactSection';
+import Footer from '@/components/Footer';
+import DotNavigation from '@/components/DotNavigation';
+import Preloader from '@/components/Preloader';
+import CanvasFallback from '@/components/CanvasFallback';
+import ScrollProgress from '@/components/ScrollProgress';
+
+const Canvas3D = dynamic(() => import('@/components/Canvas3D'), { ssr: false });
+
+export default function Home() {
+  // Estado de carga del modelo 3D: loading | ready | error
+  const [modelState, setModelState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [progress, setProgress] = useState(0);
+  const [timedOut, setTimedOut] = useState(false);
+
+  // El preloader nunca bloquea más de 8s
+  useEffect(() => {
+    const t = setTimeout(() => setTimedOut(true), 8000);
+    return () => clearTimeout(t);
+  }, []);
+
+  const handleProgress = useCallback((pct: number) => setProgress(pct), []);
+  const handleLoaded = useCallback(() => {
+    setProgress(100);
+    setModelState('ready');
+  }, []);
+  const handleError = useCallback(() => setModelState('error'), []);
+
+  const showPreloader = modelState === 'loading' && !timedOut;
+
+  return (
+    <>
+      {modelState === 'error' ? (
+        <CanvasFallback />
+      ) : (
+        <Canvas3D
+          onProgress={handleProgress}
+          onLoaded={handleLoaded}
+          onError={handleError}
+        />
+      )}
+      <Preloader visible={showPreloader} progress={progress} />
+      <ScrollProgress />
+      <Header />
+      <DotNavigation />
+      <main>
+        <HeroSection modelState={modelState} />
+        <AboutSection />
+        <ServicesSection />
+        <ProjectsSection />
+        <BlogPreviewSection />
+        <ContactSection />
+      </main>
+      <Footer />
+    </>
+  );
+}

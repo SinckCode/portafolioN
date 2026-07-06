@@ -1,50 +1,28 @@
-import React, { useEffect, useState } from "react";
-import "../estilos/DotNavigation.css"; // Asegúrate de tener este archivo CSS
-
-const sections = [
-  { id: "home", label: "Inicio" },
-  { id: "about", label: "Acerca" },
-  { id: "portfolio", label: "Portafolio" },
-  { id: "contact", label: "Contacto" }
-];
+import React from "react";
+import useActiveSection from "../hooks/useActiveSection";
+import { SECTIONS, SECTION_IDS } from "../navigation";
+import "../estilos/DotNavigation.css";
 
 const DotNavigation = () => {
-  const [active, setActive] = useState("home");
-
-  useEffect(() => {
-    const options = {
-      root: null,
-      rootMargin: "0px",
-      threshold: 0.5 // 50% visible
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          setActive(entry.target.id);
-        }
-      });
-    }, options);
-
-    sections.forEach(section => {
-      const element = document.getElementById(section.id);
-      if (element) observer.observe(element);
-    });
-
-    return () => observer.disconnect();
-  }, []);
+  const active = useActiveSection(SECTION_IDS);
 
   return (
-    <div className="dot-navigation">
-      {sections.map(section => (
+    <nav className="dot-navigation" aria-label="Progreso de secciones">
+      {SECTIONS.map((section) => (
         <a
           key={section.id}
           href={`#${section.id}`}
-          className={`dot ${active === section.id ? "active" : ""}`}
+          className={`dot${active === section.id ? " active" : ""}`}
           aria-label={section.label}
-        />
+          aria-current={active === section.id ? "true" : undefined}
+        >
+          <span className="dot__circle" aria-hidden="true" />
+          <span className="dot__tooltip" aria-hidden="true">
+            {section.label}
+          </span>
+        </a>
       ))}
-    </div>
+    </nav>
   );
 };
 

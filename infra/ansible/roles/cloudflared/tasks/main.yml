@@ -1,0 +1,31 @@
+---
+- name: Check if cloudflared is installed
+  command: which cloudflared
+  register: cloudflared_check
+  ignore_errors: yes
+  changed_when: false
+
+- name: Install cloudflared
+  when: cloudflared_check.rc != 0
+  block:
+    - name: Download cloudflared
+      get_url:
+        url: https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+        dest: /tmp/cloudflared.deb
+
+    - name: Install cloudflared package
+      apt:
+        deb: /tmp/cloudflared.deb
+
+    - name: Clean up
+      file:
+        path: /tmp/cloudflared.deb
+        state: absent
+
+- name: Ensure cloudflared config directory
+  file:
+    path: /home/{{ app_user }}/.cloudflared
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0755"

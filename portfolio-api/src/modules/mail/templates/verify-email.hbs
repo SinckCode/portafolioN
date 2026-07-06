@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Inter', Arial, sans-serif; background: #000; color: #e0e0e0; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+    .header { text-align: center; padding: 30px 0; }
+    .header h1 { color: #00b4d8; font-size: 28px; margin: 0; }
+    .content { background: rgba(255,255,255,0.05); border: 1px solid rgba(0,180,216,0.2); border-radius: 16px; padding: 30px; margin: 20px 0; }
+    .content h2 { color: #fff; font-size: 22px; }
+    .content p { line-height: 1.6; color: #ccc; }
+    .btn { display: inline-block; background: #00b4d8; color: #000; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 20px 0; }
+    .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Angel Onesto</h1>
+    </div>
+    <div class="content">
+      <h2>Verifica tu email, {{name}}</h2>
+      <p>Para completar tu registro, verifica tu direccion de correo haciendo clic en el siguiente boton:</p>
+      <a href="{{verifyUrl}}" class="btn">Verificar Email</a>
+      <p>Si no creaste una cuenta, puedes ignorar este email.</p>
+    </div>
+    <div class="footer">
+      <p>&copy; 2024 Angel Onesto. Todos los derechos reservados.</p>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "Angel Onesto - Portfolio",
+  "short_name": "AO Portfolio",
+  "description": "Portfolio de Angel David Onesto Frias - Desarrollador Full Stack & DevOps",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#00b4d8",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}

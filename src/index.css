@@ -1,13 +1,22 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html {
   scroll-behavior: smooth;
+  scrollbar-color: var(--cyan-600) var(--bg-raised);
+  scrollbar-width: thin;
 }
 
 body {
   margin: 0;
-  font-family: 'Inter', sans-serif;
-  background: #000;
-  color: #fff;
+  font-family: var(--font-body);
+  background: var(--bg-base);
+  color: var(--text-primary);
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
 section {
@@ -15,35 +24,16 @@ section {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
-  text-align: center;
+  position: relative;
 }
 
-h1, h2 {
+h1,
+h2 {
   margin: 0;
 }
 
-p {
-  max-width: 600px;
-}
-
-button {
-  background: #ef0381;
-  color: #fff;
-  border: none;
-  padding: 1rem 2rem;
-  font-size: 1rem;
-  cursor: pointer;
-  border-radius: 4px;
-  margin-top: 1rem;
-}
-
-button:hover {
-  background: #c3026a;
-}
-
 a {
-  color: #ef0381;
+  color: var(--color-primary);
   text-decoration: none;
 }
 
@@ -51,9 +41,54 @@ a:hover {
   text-decoration: underline;
 }
 
+:focus-visible {
+  outline: 2px solid var(--cyan-300);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: rgba(0, 180, 216, 0.35);
+  color: var(--text-primary);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-raised);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--cyan-600);
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--bg-raised);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cyan-500);
+}
+
 #root {
   position: static !important;
   min-height: 100vh;
   overflow: visible !important;
-  z-index: 1;
+  z-index: var(--z-content);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

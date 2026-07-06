@@ -1,123 +1,130 @@
-.floating-wrapper {
+/* FAB — visible solo en móvil */
+.floating-btn {
   position: fixed;
-  bottom: 32px;
-  left: 65%;
-  transform: translateX(-50%);
-  z-index: 9999;
-  pointer-events: none;
-  display: flex;
+  right: 1.25rem;
+  bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  z-index: var(--z-fab);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-primary);
+  box-shadow: var(--shadow-2), var(--glow-md);
+  cursor: pointer;
+  display: none;
   flex-direction: column;
   align-items: center;
-}
-
-.floating-btn,
-.floating-menu {
-  pointer-events: auto;
-}
-
-/* 🔘 Botón flotante con color principal */
-.floating-btn {
-  background: #00b4d8;
-  border: none;
-  border-radius: 50%;
-  width: 72px;
-  height: 72px;
-  cursor: pointer;
-  display: flex;
   justify-content: center;
-  align-items: center;
-  position: relative;
-  right: -3rem;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
-  transition: transform 0.3s ease;
+  gap: 5px;
+  transition: transform var(--dur-fast) var(--ease-out);
 }
 
-/* Líneas del ícono (hamburguesa / X) */
+.floating-btn:active {
+  transform: scale(0.92);
+}
+
 .floating-btn span {
-  position: absolute;
-  width: 30px;
-  height: 3px;
-  background: #fff;
-  border-radius: 2px;
-  transition: all 0.3s ease;
+  display: block;
+  width: 22px;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--text-on-accent);
+  transition: transform var(--dur-base) var(--ease-out), opacity var(--dur-base) ease;
 }
 
-.floating-btn span:nth-child(1) {
-  top: 26px;
-}
-.floating-btn span:nth-child(2) {
-  top: 34px;
-}
-.floating-btn span:nth-child(3) {
-  top: 42px;
-}
-
+/* Hamburguesa → X */
 .floating-btn.open span:nth-child(1) {
-  transform: rotate(45deg);
-  top: 34px;
+  transform: translateY(7px) rotate(45deg);
 }
+
 .floating-btn.open span:nth-child(2) {
   opacity: 0;
 }
+
 .floating-btn.open span:nth-child(3) {
-  transform: rotate(-45deg);
-  top: 34px;
+  transform: translateY(-7px) rotate(-45deg);
 }
 
-/* 🧭 Menú emergente */
-.floating-menu {
+/* Backdrop */
+.floating-backdrop {
   position: fixed;
-  bottom: 120px;
-  left: 25%;
-  transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(14px);
-  border-radius: 20px;
-  padding: 1.2rem 2rem;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
-  animation: fadeInScale 0.3s ease forwards;
-  min-width: 220px;
-  z-index: 9998;
+  inset: 0;
+  z-index: calc(var(--z-fab) - 2);
+  background: rgba(3, 4, 5, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
-.floating-menu ul {
+/* Bottom sheet */
+.floating-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: calc(var(--z-fab) - 1);
+  padding: var(--space-2) var(--space-4)
+    calc(var(--space-7) + env(safe-area-inset-bottom, 0px));
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-top: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow-2);
+}
+
+.floating-sheet__handle {
+  display: block;
+  width: 40px;
+  height: 4px;
+  margin: 0 auto var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--text-muted);
+  opacity: 0.5;
+}
+
+.floating-sheet ul {
   list-style: none;
   margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
-.floating-menu li {
-  margin: 16px 0;
-  text-align: center;
-}
-
-.floating-menu a {
-  color: #fff;
-  font-weight: 600;
-  font-size: 1.1rem;
+.floating-sheet a {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+  font-weight: 500;
   text-decoration: none;
-  font-family: 'Segoe UI', sans-serif;
-  transition: color 0.3s ease;
+  transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
 }
 
-.floating-menu a:hover {
-  color: #00b4d8;
+.floating-sheet a:hover {
+  text-decoration: none;
+  color: var(--text-primary);
+  background: var(--color-primary-soft);
 }
 
-@keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) scale(0.95);
+.floating-sheet a.active {
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+@media (max-width: 768px) {
+  .floating-btn {
+    display: flex;
   }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) scale(1);
-  }
 }
 
-/* ❌ Ocultar en escritorio */
-@media screen and (min-width: 769px) {
-  .floating-wrapper {
+@media (min-width: 769px) {
+  .floating-btn,
+  .floating-backdrop,
+  .floating-sheet {
     display: none;
   }
 }

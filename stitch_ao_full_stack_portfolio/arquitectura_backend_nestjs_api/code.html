@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NestJS Backend Architecture</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#004e5f",
+                        "surface-tint": "#4cd6fb",
+                        "on-tertiary-fixed": "#2f1500",
+                        "primary-fixed-dim": "#4cd6fb",
+                        "on-surface": "#dee3e6",
+                        "on-tertiary": "#4d2600",
+                        "surface-container-high": "#252b2d",
+                        "surface-container-highest": "#303638",
+                        "surface": "#0e1416",
+                        "on-primary-container": "#00414f",
+                        "secondary-container": "#1e4c5a",
+                        "outline-variant": "#3d494d",
+                        "surface-container": "#1b2023",
+                        "on-secondary-container": "#90bccb",
+                        "tertiary-fixed": "#ffdcc3",
+                        "on-error": "#690005",
+                        "on-surface-variant": "#bcc9ce",
+                        "on-primary": "#003642",
+                        "primary-container": "#00b4d8",
+                        "on-background": "#dee3e6",
+                        "surface-dim": "#0e1416",
+                        "surface-container-low": "#171c1f",
+                        "secondary": "#a1cddd",
+                        "tertiary-fixed-dim": "#ffb77d",
+                        "on-tertiary-container": "#5d2f00",
+                        "tertiary-container": "#eb8f3b",
+                        "background": "#0e1416",
+                        "tertiary": "#ffb77d",
+                        "surface-variant": "#303638",
+                        "error": "#ffb4ab",
+                        "inverse-primary": "#00677d",
+                        "outline": "#869398",
+                        "surface-bright": "#343a3c",
+                        "on-secondary-fixed-variant": "#1e4c5a",
+                        "on-secondary": "#003642",
+                        "inverse-on-surface": "#2b3134",
+                        "inverse-surface": "#dee3e6",
+                        "secondary-fixed-dim": "#a1cddd",
+                        "surface-container-lowest": "#090f11",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "error-container": "#93000a",
+                        "on-secondary-fixed": "#001f27",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed": "#bdeafa",
+                        "primary": "#4cd6fb",
+                        "on-primary-fixed": "#001f27",
+                        "primary-fixed": "#b3ebff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-desktop": "64px",
+                        "max-width": "1200px",
+                        "gutter": "24px",
+                        "base": "4px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "label": ["Inter"],
+                        "h1-mobile": ["Inter"],
+                        "h3": ["Inter"],
+                        "h2": ["Inter"],
+                        "h1": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body": ["Inter"],
+                        "mono": ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", "monospace"]
+                    },
+                    "fontSize": {
+                        "label": ["0.75rem", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "h1-mobile": ["2.25rem", { "lineHeight": "1.2", "fontWeight": "800" }],
+                        "h3": ["1.5rem", { "lineHeight": "1.4", "fontWeight": "600" }],
+                        "h2": ["2rem", { "lineHeight": "1.3", "fontWeight": "700" }],
+                        "h1": ["3rem", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+                        "body-sm": ["0.875rem", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "body": ["1rem", { "lineHeight": "1.6", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+        }
+        
+        .nav-active {
+            background-color: theme('colors.secondary-container');
+            color: theme('colors.on-secondary-container');
+            font-weight: bold;
+            border-radius: theme('borderRadius.lg');
+        }
+        
+        .nav-inactive {
+            color: theme('colors.on-surface-variant');
+            border-radius: theme('borderRadius.lg');
+            transition: background-color 0.2s, color 0.2s;
+        }
+        
+        .nav-inactive:hover {
+            background-color: theme('colors.surface-variant');
+        }
+        
+        .glow-cyan:hover {
+            box-shadow: 0 0 15px #00b4d840;
+        }
+        
+        /* Glassmorphism utility */
+        .glass {
+            background: rgba(15, 17, 21, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid #2a2d35;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl border-b border-outline-variant shadow-sm flex justify-between items-center h-16 px-gutter max-w-max-width mx-auto transition-all duration-300 ease-in-out md:hidden">
+<div class="font-h3 text-h3 font-extrabold text-primary">AO</div>
+<!-- Mobile nav hidden for pure structural focus, normally handled via hamburger -->
+<div class="text-on-surface-variant">Docs</div>
+</nav>
+<nav class="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl border-b border-outline-variant shadow-sm hidden md:flex justify-between items-center h-16 px-gutter transition-all duration-300 ease-in-out">
+<div class="font-h3 text-h3 font-extrabold text-primary">AO</div>
+<div class="flex space-x-6 items-center">
+<a class="font-body text-body text-on-surface-variant hover:text-primary transition-colors" href="#">Inicio</a>
+<a class="font-body text-body text-on-surface-variant hover:text-primary transition-colors" href="#">Blog</a>
+<a class="font-body text-body text-on-surface-variant hover:text-primary transition-colors" href="#">Cursos</a>
+<a class="font-body text-body text-primary border-b-2 border-primary pb-1 hover:text-primary hover:glow-cyan" href="#">Portafolio</a>
+<a class="font-body text-body text-on-surface-variant hover:text-primary transition-colors" href="#">Contacto</a>
+<button class="bg-transparent border border-primary text-primary px-4 py-2 rounded font-body-sm text-body-sm hover:bg-primary hover:text-on-primary transition-all duration-300">Iniciar Sesion</button>
+</div>
+</nav>
+<div class="flex flex-1 pt-16 md:pt-16">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col h-screen w-64 fixed left-0 top-16 bg-surface-container border-r border-outline-variant p-4 space-y-2 z-40">
+<div class="mb-6">
+<div class="font-h2 text-h2 text-primary">Admin Panel</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Management Console</div>
+</div>
+<a class="flex items-center space-x-3 p-3 nav-inactive group scale-102 transition-transform" href="#">
+<span class="material-symbols-outlined font-variation-settings: 'FILL' 1">dashboard</span>
+<span class="font-body text-body">Dashboard</span>
+</a>
+<a class="flex items-center space-x-3 p-3 nav-active group scale-102 transition-transform" href="#">
+<span class="material-symbols-outlined">code</span>
+<span class="font-body text-body">Proyectos</span>
+</a>
+<a class="flex items-center space-x-3 p-3 nav-inactive group scale-102 transition-transform" href="#">
+<span class="material-symbols-outlined">article</span>
+<span class="font-body text-body">Contenido</span>
+</a>
+<a class="flex items-center space-x-3 p-3 nav-inactive group scale-102 transition-transform" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-body text-body">Usuarios</span>
+</a>
+<a class="flex items-center space-x-3 p-3 nav-inactive group scale-102 transition-transform" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body text-body">Configuración</span>
+</a>
+<div class="mt-auto pt-4">
+<button class="w-full bg-primary text-on-primary py-2 rounded-lg font-body font-bold hover:glow-cyan scale-102 transition-all">New Project</button>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 md:ml-64 p-margin-mobile md:p-margin-desktop max-w-max-width w-full">
+<header class="mb-12 border-b border-outline-variant pb-6">
+<h1 class="font-h1-mobile md:font-h1 text-primary mb-4">NestJS Backend Architecture</h1>
+<p class="font-body text-on-surface-variant max-w-3xl">
+                    Detailed technical overview of the monolithic NestJS backend service, including module boundaries, infrastructure setup, and folder structure. Built for high performance and scalability.
+                </p>
+</header>
+<!-- Infrastructure Diagram Section -->
+<section class="mb-16">
+<h2 class="font-h2 text-h2 text-primary mb-6 flex items-center">
+<span class="material-symbols-outlined mr-3 text-secondary">architecture</span>
+                    Infrastructure Diagram
+                </h2>
+<div class="glass rounded-xl p-6 relative group border hover:border-primary transition-colors duration-300">
+<!-- Placeholder for actual diagram, styling a conceptual layout -->
+<div class="aspect-video bg-surface-container-lowest rounded-lg border border-outline-variant flex items-center justify-center relative overflow-hidden" data-alt="A clean, highly technical dark mode system architecture diagram illustrating a NestJS backend infrastructure. The diagram features neon cyan and subtle grey connecting lines linking glowing abstract server nodes, a central API gateway block, and cylindrical database icons. The background is a very deep, rich black-grey (#0e1416) emphasizing a cyberpunk-lite aesthetic. Soft blue glows highlight active data pathways. Professional, precise, and structural." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAsNqzpYV8lcdB0sgkOjs33THawKpKvaUc-aOQ2Xqbf9fc4VOuwmVB8H02lQdtItncMj7czYV0qvEi4qo5clFwzWcik0errQySe6VMJPos_nseXHXcs5H98OflrUzyHG5BYKZVKs99RxlzeYTGAlo1884oakiy14OeQJ672t3MqpMsHJdXmQKCm9vJiPojEKs5BaZY9Jhj_3qGAtCvI_3PxOF8YRb8O_1jGvghWU6BhsusaN7IfR9DPQu6XZ76p-vfMxdmA2QPcv9rJ')">
+<!-- Simulated Diagram Overlay for structural feel if image doesn't load immediately -->
+<div class="absolute inset-0 flex flex-col items-center justify-center opacity-70">
+<div class="px-6 py-3 bg-secondary-container text-on-secondary border border-primary rounded font-mono text-sm mb-8 z-10">Client / Frontend</div>
+<div class="h-8 w-0.5 bg-primary absolute top-[25%] left-1/2"></div>
+<div class="flex space-x-12 z-10">
+<div class="px-4 py-2 bg-surface border border-outline text-on-surface rounded font-mono text-xs text-center">Auth<br/>Service</div>
+<div class="px-6 py-4 bg-surface-bright border border-primary rounded font-mono text-sm shadow-[0_0_15px_rgba(0,180,216,0.2)]">NestJS Core API</div>
+<div class="px-4 py-2 bg-surface border border-outline text-on-surface rounded font-mono text-xs text-center">Worker<br/>Queue</div>
+</div>
+<div class="h-8 w-0.5 bg-outline absolute bottom-[35%] left-1/2"></div>
+<div class="flex space-x-8 mt-8 z-10">
+<div class="px-4 py-3 bg-surface-container-high border-t-4 border-secondary rounded font-mono text-xs flex items-center"><span class="material-symbols-outlined text-[16px] mr-1">database</span> PostgreSQL</div>
+<div class="px-4 py-3 bg-surface-container-high border-t-4 border-tertiary rounded font-mono text-xs flex items-center"><span class="material-symbols-outlined text-[16px] mr-1">dns</span> Redis Cache</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Folder Structure Section -->
+<section class="mb-16">
+<h2 class="font-h2 text-h2 text-primary mb-6 flex items-center">
+<span class="material-symbols-outlined mr-3 text-secondary">folder_open</span>
+                    Directory Structure
+                </h2>
+<div class="glass rounded-xl p-6 overflow-x-auto border hover:border-primary transition-colors duration-300">
+<pre class="font-mono text-body-sm text-on-surface-variant leading-relaxed"><span class="text-primary">src/</span>
+├── <span class="text-secondary">common/</span>           <span class="text-outline"># Global guards, interceptors, filters</span>
+│   ├── decorators/
+│   ├── filters/
+│   └── middleware/
+├── <span class="text-secondary">config/</span>           <span class="text-outline"># Environment &amp; setup configurations</span>
+├── <span class="text-secondary">modules/</span>          <span class="text-outline"># Feature modules (Domain Driven Design)</span>
+│   ├── <span class="text-tertiary">auth/</span>
+│   │   ├── dto/
+│   │   ├── strategies/
+│   │   ├── auth.controller.ts
+│   │   ├── auth.service.ts
+│   │   └── auth.module.ts
+│   ├── <span class="text-tertiary">users/</span>
+│   │   ├── entities/
+│   │   ├── users.service.ts
+│   │   └── users.module.ts
+│   └── <span class="text-tertiary">posts/</span>
+├── <span class="text-secondary">providers/</span>        <span class="text-outline"># External integrations (AWS, Stripe)</span>
+├── app.module.ts
+└── main.ts
+                    </pre>
+</div>
+</section>
+<!-- Modules Summary Section -->
+<section class="mb-16">
+<h2 class="font-h2 text-h2 text-primary mb-6 flex items-center">
+<span class="material-symbols-outlined mr-3 text-secondary">view_module</span>
+                    Core Modules
+                </h2>
+<div class="grid grid-cols-1 gap-6">
+<!-- Auth Module -->
+<div class="bg-surface border border-outline-variant rounded-xl overflow-hidden hover:border-primary transition-all duration-300 group">
+<div class="p-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-h3 text-h3 text-on-surface">Authentication</h3>
+<span class="bg-surface-container px-3 py-1 rounded-full font-mono text-xs text-primary border border-outline-variant group-hover:border-primary transition-colors">@Module/Auth</span>
+</div>
+<p class="font-body-sm text-on-surface-variant mb-6">Handles JWT issuing, verification, and OAuth2 integrations. Tightly coupled with the Users module for profile validation.</p>
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant">
+<th class="py-2 font-label text-label text-secondary uppercase tracking-wider">Component</th>
+<th class="py-2 font-label text-label text-secondary uppercase tracking-wider">Responsibility</th>
+</tr>
+</thead>
+<tbody class="font-body-sm text-on-surface">
+<tr class="border-b border-surface-container">
+<td class="py-3 font-mono text-xs">JwtStrategy</td>
+<td class="py-3 text-on-surface-variant">Validates bearer tokens attached to incoming requests.</td>
+</tr>
+<tr class="border-b border-surface-container">
+<td class="py-3 font-mono text-xs">AuthGuard</td>
+<td class="py-3 text-on-surface-variant">Protects routes, ensuring active session exists.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Users Module -->
+<div class="bg-surface border border-outline-variant rounded-xl overflow-hidden hover:border-primary transition-all duration-300 group">
+<div class="p-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-h3 text-h3 text-on-surface">Users Management</h3>
+<span class="bg-surface-container px-3 py-1 rounded-full font-mono text-xs text-primary border border-outline-variant group-hover:border-primary transition-colors">@Module/Users</span>
+</div>
+<p class="font-body-sm text-on-surface-variant mb-6">Manages user lifecycle, roles, permissions (RBAC), and profile data synchronization.</p>
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant">
+<th class="py-2 font-label text-label text-secondary uppercase tracking-wider">Component</th>
+<th class="py-2 font-label text-label text-secondary uppercase tracking-wider">Responsibility</th>
+</tr>
+</thead>
+<tbody class="font-body-sm text-on-surface">
+<tr class="border-b border-surface-container">
+<td class="py-3 font-mono text-xs">UsersService</td>
+<td class="py-3 text-on-surface-variant">CRUD operations and business logic for User entities.</td>
+</tr>
+<tr class="border-b border-surface-container">
+<td class="py-3 font-mono text-xs">RolesGuard</td>
+<td class="py-3 text-on-surface-variant">Verifies user permissions against route requirements.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest border-t border-outline-variant w-full py-20 mt-auto relative z-10">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter max-w-max-width mx-auto px-gutter">
+<div class="col-span-1 md:col-span-1">
+<span class="font-h3 text-h3 text-primary">AO</span>
+</div>
+<div class="col-span-1 md:col-span-3 flex flex-col md:flex-row justify-end space-y-4 md:space-y-0 md:space-x-8">
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">About</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Quick Links</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Socials</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Newsletter</a>
+</div>
+</div>
+<div class="max-w-max-width mx-auto px-gutter mt-8 pt-8 border-t border-surface-variant text-center md:text-left">
+<p class="font-body-sm text-body-sm text-on-surface-variant">© 2024 AO Portfolio. Built for high performance.</p>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,105 @@
+---
+- name: Clone portfolio API
+  become_user: "{{ app_user }}"
+  git:
+    repo: "{{ portfolio_api_repo }}"
+    dest: "{{ app_dir }}/portfolio-api"
+    version: main
+    force: no
+
+- name: Clone portfolio frontend
+  become_user: "{{ app_user }}"
+  git:
+    repo: "{{ portfolio_frontend_repo }}"
+    dest: "{{ app_dir }}/portfolio-frontend"
+    version: main
+    force: no
+
+- name: Install API dependencies
+  become_user: "{{ app_user }}"
+  npm:
+    path: "{{ app_dir }}/portfolio-api"
+    state: present
+
+- name: Build API
+  become_user: "{{ app_user }}"
+  command: npm run build
+  args:
+    chdir: "{{ app_dir }}/portfolio-api"
+
+- name: Install frontend dependencies
+  become_user: "{{ app_user }}"
+  npm:
+    path: "{{ app_dir }}/portfolio-frontend"
+    state: present
+
+- name: Build frontend
+  become_user: "{{ app_user }}"
+  command: npm run build
+  args:
+    chdir: "{{ app_dir }}/portfolio-frontend"
+
+- name: Copy API env file
+  template:
+    src: api.env.j2
+    dest: "{{ app_dir }}/portfolio-api/.env"
+    owner: "{{ app_user }}"
+    mode: "0600"
+
+- name: Setup Nginx config
+  template:
+    src: nginx-portfolio.conf.j2
+    dest: /etc/nginx/sites-available/portfolio
+    mode: "0644"
+  notify: reload nginx
+
+- name: Enable Nginx site
+  file:
+    src: /etc/nginx/sites-available/portfolio
+    dest: /etc/nginx/sites-enabled/portfolio
+    state: link
+  notify: reload nginx
+
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: present
+
+- name: Remove default Nginx site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: reload nginx
+
+- name: Copy monitoring stack files
+  become_user: "{{ app_user }}"
+  copy:
+    src: "{{ item }}"
+    dest: "{{ app_dir }}/monitoring/"
+  loop:
+    - "{{ app_dir }}/portfolio-api/infra/docker-compose.monitoring.yml"
+    - "{{ app_dir }}/portfolio-api/infra/loki/"
+    - "{{ app_dir }}/portfolio-api/infra/promtail/"
+    - "{{ app_dir }}/portfolio-api/infra/grafana/"
+
+- name: Start monitoring stack
+  become_user: "{{ app_user }}"
+  command: docker compose -f docker-compose.monitoring.yml up -d
+  args:
+    chdir: "{{ app_dir }}/monitoring"
+
+- name: Start API with PM2
+  become_user: "{{ app_user }}"
+  command: pm2 start ecosystem.config.js
+  args:
+    chdir: "{{ app_dir }}/portfolio-api"
+
+- name: Start frontend with PM2
+  become_user: "{{ app_user }}"
+  command: pm2 start npm --name portfolio-frontend -- start
+  args:
+    chdir: "{{ app_dir }}/portfolio-frontend"
+
+- name: Save PM2 process list
+  become_user: "{{ app_user }}"
+  command: pm2 save
