@@ -28,6 +28,25 @@ const nextConfig: NextConfig = {
             key: 'Strict-Transport-Security',
             value: 'max-age=31536000; includeSubDomains',
           },
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+          { key: 'Cross-Origin-Resource-Policy', value: 'same-origin' },
+          {
+            // CSP: permite self + API (imágenes/uploads, fetch), fuentes de Google,
+            // e inline styles/scripts que Next.js necesita. frame-ancestors evita clickjacking.
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' https://fonts.gstatic.com data:",
+              "img-src 'self' data: blob: https://api.angelonesto.com https://*.googleusercontent.com https://avatars.githubusercontent.com",
+              "media-src 'self' https://api.angelonesto.com",
+              "connect-src 'self' https://api.angelonesto.com",
+              "frame-ancestors 'self'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join('; '),
+          },
         ],
       },
     ];
