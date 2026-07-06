@@ -1,0 +1,45 @@
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Métricas del host VM 100 (apps)
+  - job_name: node-vm100
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels: { instance: 'vm100-apps' }
+
+  # Métricas del host VM 101 (mongo). El firewall solo permite 22/27017 entre
+  # segmentos, así que node_exporter (127.0.0.1:9100 en VM101) se alcanza por
+  # un túnel SSH que expone 19100 en el host de VM100.
+  - job_name: node-vm101
+    static_configs:
+      - targets: ['host.docker.internal:19100']
+        labels: { instance: 'vm101-mongo' }
+
+  # Métricas de MongoDB
+  - job_name: mongodb
+    static_configs:
+      - targets: ['mongodb-exporter:9216']
+        labels: { instance: 'vm101-mongo' }
+
+  # Sondas HTTP de disponibilidad (sitio / API caídos)
+  - job_name: blackbox-http
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - https://angelonesto.com
+          - https://api.angelonesto.com/api/health
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115

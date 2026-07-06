@@ -20,6 +20,7 @@ services:
     image: grafana/loki:3.0.0
     container_name: portfolio-loki
     restart: unless-stopped
+    user: root # el volumen loki_data lo crea root; Loki 3 corre como uid 10001 y no puede escribir
     ports:
       - "3100:3100"
     volumes:
@@ -45,6 +46,53 @@ services:
       loki:
         condition: service_healthy
 
+  # --- Métricas ---
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: portfolio-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ../infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    labels:
+      logging: "promtail"
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: portfolio-node-exporter
+    restart: unless-stopped
+    pid: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --path.rootfs=/rootfs
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+
+  mongodb-exporter:
+    image: percona/mongodb_exporter:0.40
+    container_name: portfolio-mongodb-exporter
+    restart: unless-stopped
+    command:
+      - --mongodb.uri=${MONGO_EXPORTER_URI}
+      - --collect-all
+      - --compatible-mode
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.25.0
+    container_name: portfolio-blackbox-exporter
+    restart: unless-stopped
+
   grafana:
     image: grafana/grafana:11.0.0
     container_name: portfolio-grafana
@@ -53,9 +101,15 @@ services:
       - "3003:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_ADMIN_PASSWORD:-admin}
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SERVER_ROOT_URL=https://grafana.angelonesto.com
+      # Notificaciones por correo vía el mail-server interno (VM102)
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=10.10.20.102:25
+      - GF_SMTP_FROM_ADDRESS=noreply@angelonesto.com
+      - GF_SMTP_FROM_NAME=Grafana Portfolio
+      - GF_SMTP_SKIP_VERIFY=true
     volumes:
       - ../infra/grafana/provisioning:/etc/grafana/provisioning:ro
       - ../infra/grafana/dashboards:/var/lib/grafana/dashboards:ro
@@ -70,3 +124,4 @@ volumes:
   redis_data:
   loki_data:
   grafana_data:
+  prometheus_data:

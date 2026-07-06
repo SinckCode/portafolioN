@@ -1,0 +1,11 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: email-onesto
+    receivers:
+      - uid: email_onesto
+        type: email
+        settings:
+          addresses: soyangeldavid1@gmail.com
+          singleEmail: true
