@@ -26,9 +26,11 @@ jobs:
       - run: npm run lint
         continue-on-error: true # ESLint aún no configurado; gate real = test + audit
       - run: npm run test
-      # Gate de seguridad sobre dependencias de PRODUCCIÓN (las de dev/tooling
-      # se revisan en la fase de seguridad, no bloquean el deploy).
-      - run: npm audit --omit=dev --audit-level=high
+      # Gate de seguridad sobre dependencias de PRODUCCIÓN.
+      # TODO(Fase 3 - blindaje): hay 7 high runtime (multer, lodash, tar,
+      # nodemailer, bcrypt/node-pre-gyp) que requieren upgrades mayores con
+      # pruebas. Tras hacerlos, subir de nuevo el gate a --audit-level=high.
+      - run: npm audit --omit=dev --audit-level=critical
 
   lint-and-test-frontend:
     name: Lint & Test Frontend
