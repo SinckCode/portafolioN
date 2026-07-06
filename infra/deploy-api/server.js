@@ -38,7 +38,7 @@ const projects = {
       'cd /home/onesto/portfolio/portfolio-api',
       'npm ci',
       'npm run build',
-      'pm2 restart portfolio-api --update-env',
+      'pm2 startOrReload /home/onesto/portfolio/infra/ecosystem.config.js --only portfolio-api',
     ],
   },
   'portfolio-frontend': {
@@ -50,7 +50,7 @@ const projects = {
       'cd /home/onesto/portfolio/portfolio-frontend',
       'npm ci',
       'npm run build',
-      'pm2 restart portfolio-frontend --update-env',
+      'pm2 startOrReload /home/onesto/portfolio/infra/ecosystem.config.js --only portfolio-frontend',
     ],
   },
 

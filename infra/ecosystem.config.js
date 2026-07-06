@@ -9,8 +9,9 @@ module.exports = {
       instances: 1,
       exec_mode: 'fork',
       max_memory_restart: '450M',
-      env: { NODE_ENV: 'production' },
-      // dotenv/config en main.ts lee portfolio-api/.env
+      // PORT explícito: evita que un restart --update-env herede el PORT
+      // de otro proceso (p.ej. deploy-api en 5000). dotenv no pisa env ya presente.
+      env: { NODE_ENV: 'production', PORT: '4000' },
     },
     {
       name: 'portfolio-frontend',
