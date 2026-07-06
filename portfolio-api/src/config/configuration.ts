@@ -1,4 +1,4 @@
-export default () => ({
+const configuration = () => ({
   port: parseInt(process.env.PORT || '3001', 10),
   database: {
     uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/portfolio',
@@ -33,3 +33,5 @@ export default () => ({
     from: process.env.MAIL_FROM || 'noreply@angelonesto.com',
   },
 });
+
+export default configuration;

@@ -3,7 +3,6 @@ import { AppModule } from '../app.module';
 import { getModelToken } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
-import { v4 as uuid } from 'uuid';
 
 async function seed() {
   const app = await NestFactory.createApplicationContext(AppModule);
