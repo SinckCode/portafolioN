@@ -8,15 +8,32 @@ import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { join } from 'path';
+import type { Request, Response, NextFunction } from 'express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
+  const isProd = process.env.NODE_ENV === 'production';
+
+  // Detrás de Cloudflare: confía en el proxy para IP real / HTTPS
+  app.set('trust proxy', 1);
 
   app.useStaticAssets(join(__dirname, '..', 'uploads'), { prefix: '/uploads' });
 
-  app.use(helmet());
+  // Cabeceras de seguridad explícitas (el default no fijaba HSTS/CORP tras el proxy)
+  app.use(
+    helmet({
+      contentSecurityPolicy: false, // el frontend maneja su CSP; evita romper /uploads
+      crossOriginResourcePolicy: { policy: 'cross-origin' }, // sirve /uploads a angelonesto.com
+      hsts: { maxAge: 31536000, includeSubDomains: true },
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    }),
+  );
+  app.use((_req: Request, res: Response, next: NextFunction) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    next();
+  });
 
   const corsOrigins = configService.get<string>('cors.origins', 'http://localhost:3000');
   app.enableCors({
@@ -37,14 +54,17 @@ async function bootstrap() {
     }),
   );
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('Portfolio API')
-    .setDescription('API for angelonesto.com portfolio, blog, and courses')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('docs', app, document);
+  // Swagger solo fuera de producción: no exponer la superficie del API en público
+  if (!isProd) {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Portfolio API')
+      .setDescription('API for angelonesto.com portfolio, blog, and courses')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('docs', app, document);
+  }
 
   const port = configService.get<number>('port', 3001);
   await app.listen(port);
