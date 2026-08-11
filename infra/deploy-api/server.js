@@ -5,9 +5,14 @@ const app = express();
 app.use(express.json());
 
 const TOKEN = process.env.DEPLOY_TOKEN;
+const PORTFOLIO_REPO = 'https://github.com/SinckCode/portafolioN.git';
+const PORTFOLIO_DIR = '/home/onesto/portfolio';
 
 // NVM source command for VMs that use NVM (VM 103)
 const NVM_SOURCE = 'source ~/.nvm/nvm.sh 2>/dev/null;';
+
+// Clona el monorepo si no existe; si existe, hace pull
+const ensureRepo = `test -d ${PORTFOLIO_DIR}/.git && (cd ${PORTFOLIO_DIR} && git pull origin main) || git clone ${PORTFOLIO_REPO} ${PORTFOLIO_DIR}`;
 
 function auth(req, res, next) {
   const h = req.headers['authorization'] || '';
@@ -33,24 +38,22 @@ const projects = {
     description: 'NestJS API (api.angelonesto.com)',
     local: true,
     commands: [
-      'cd /home/onesto/portfolio',
-      'git pull origin main',
-      'cd /home/onesto/portfolio/portfolio-api',
+      ensureRepo,
+      `cd ${PORTFOLIO_DIR}/portfolio-api`,
       'npm ci',
       'npm run build',
-      'pm2 startOrReload /home/onesto/portfolio/infra/ecosystem.config.js --only portfolio-api',
+      `pm2 startOrReload ${PORTFOLIO_DIR}/infra/ecosystem.config.js --only portfolio-api`,
     ],
   },
   'portfolio-frontend': {
     description: 'Next.js (angelonesto.com)',
     local: true,
     commands: [
-      'cd /home/onesto/portfolio',
-      'git pull origin main',
-      'cd /home/onesto/portfolio/portfolio-frontend',
+      ensureRepo,
+      `cd ${PORTFOLIO_DIR}/portfolio-frontend`,
       'npm ci',
       'npm run build',
-      'pm2 startOrReload /home/onesto/portfolio/infra/ecosystem.config.js --only portfolio-frontend',
+      `pm2 startOrReload ${PORTFOLIO_DIR}/infra/ecosystem.config.js --only portfolio-frontend`,
     ],
   },
 
