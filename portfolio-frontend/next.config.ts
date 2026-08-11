@@ -41,7 +41,7 @@ const nextConfig: NextConfig = {
               "font-src 'self' https://fonts.gstatic.com data:",
               "img-src 'self' data: blob: https://api.angelonesto.com https://*.googleusercontent.com https://avatars.githubusercontent.com",
               "media-src 'self' https://api.angelonesto.com",
-              "connect-src 'self' https://api.angelonesto.com",
+              "connect-src 'self' blob: https://api.angelonesto.com",
               "frame-ancestors 'self'",
               "base-uri 'self'",
               "form-action 'self'",

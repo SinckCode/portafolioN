@@ -94,6 +94,25 @@ export class CommentsService {
     return comment;
   }
 
+  async findByAuthor(authorId: string, paginationDto: PaginationDto) {
+    const { page, limit } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const query = { author: authorId };
+
+    const [data, total] = await Promise.all([
+      this.commentModel
+        .find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.commentModel.countDocuments(query).exec(),
+    ]);
+
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
+  }
+
   async findPending(paginationDto: PaginationDto) {
     const { page, limit } = paginationDto;
     const skip = (page - 1) * limit;

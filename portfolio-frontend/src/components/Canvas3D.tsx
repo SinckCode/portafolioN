@@ -65,24 +65,23 @@ export default function Canvas3D({ onProgress, onLoaded, onError }: Canvas3DProp
     scene.background = null; // el gradiente CSS del contenedor se ve detrás
 
     const camera = new THREE.PerspectiveCamera(
-      45,
+      50,
       window.innerWidth / window.innerHeight,
       0.1,
-      1000
+      5000
     );
-    camera.position.set(0, 2, 5);
+    camera.position.set(0, 1, 5);
 
-    renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.domElement.style.touchAction = 'pan-y';
     container.appendChild(renderer.domElement);
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
-    directionalLight.position.set(5, 10, 7);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(5, 10, 7.5);
     scene.add(directionalLight);
 
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -108,14 +107,18 @@ export default function Canvas3D({ onProgress, onLoaded, onError }: Canvas3DProp
 
         const box = new THREE.Box3().setFromObject(model);
         const center = box.getCenter(new THREE.Vector3());
-        const size = box.getSize(new THREE.Vector3());
-        const maxDim = Math.max(size.x, size.y, size.z);
-        const scale = 3 / maxDim;
+        const size = box.getSize(new THREE.Vector3()).length();
 
-        model.scale.setScalar(scale);
-        model.position.sub(center.multiplyScalar(scale));
+        model.position.sub(center);
+        const scaleFactor = 10 / size;
+        model.scale.setScalar(scaleFactor);
+        model.position.y += 0.3;
 
         scene.add(model);
+
+        controls.target.set(0, 0.3, 0);
+        controls.update();
+
         emit('onLoaded');
       },
       (xhr) => {
@@ -152,7 +155,7 @@ export default function Canvas3D({ onProgress, onLoaded, onError }: Canvas3DProp
       if (!prefersReducedMotion) {
         const vh = window.innerHeight;
         const t = Math.min(scrollY / (vh * 2), 1);
-        camera.position.y = 2 + t * 0.6;
+        camera.position.y = 1 + t * 0.6;
 
         // Fade a 35% tras el hero para dar contraste al contenido
         const fadeStart = vh * 0.4;

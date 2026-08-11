@@ -24,6 +24,29 @@ export default function BlogPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Newsletter form state
+  const [nlEmail, setNlEmail] = useState('');
+  const [nlLoading, setNlLoading] = useState(false);
+  const [nlSuccess, setNlSuccess] = useState('');
+  const [nlError, setNlError] = useState('');
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nlEmail) return;
+    setNlLoading(true);
+    setNlError('');
+    setNlSuccess('');
+    try {
+      await api.subscribe(nlEmail);
+      setNlSuccess('Te has suscrito correctamente.');
+      setNlEmail('');
+    } catch (err) {
+      setNlError(err instanceof Error ? err.message : 'Error al suscribirse');
+    } finally {
+      setNlLoading(false);
+    }
+  };
+
   useEffect(() => {
     api.getPosts({ status: 'published' })
       .then((data) => setPosts((data as { data: Post[] }).data || data as Post[]))
@@ -174,16 +197,29 @@ export default function BlogPage() {
               Recibe los ultimos articulos y novedades directamente en tu
               bandeja de entrada.
             </p>
-            <div className="newsletter__form">
+            <form className="newsletter__form" onSubmit={handleSubscribe}>
               <input
                 type="email"
                 placeholder="tu@email.com"
+                value={nlEmail}
+                onChange={(e) => setNlEmail(e.target.value)}
                 className="input flex-1"
+                required
               />
-              <button className="btn btn--primary whitespace-nowrap">
-                Suscribirme
+              <button
+                type="submit"
+                className="btn btn--primary whitespace-nowrap"
+                disabled={nlLoading}
+              >
+                {nlLoading ? 'Enviando...' : 'Suscribirme'}
               </button>
-            </div>
+            </form>
+            {nlSuccess && (
+              <p className="text-green-400 text-sm mt-3">{nlSuccess}</p>
+            )}
+            {nlError && (
+              <p className="text-red-400 text-sm mt-3">{nlError}</p>
+            )}
           </div>
         </section>
       </main>

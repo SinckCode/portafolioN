@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { UsersService } from '@/modules/users/users.service';
+import { MailService } from '@/modules/mail/mail.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -26,6 +27,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private mailService: MailService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<UserDocument | null> {
@@ -50,7 +52,11 @@ export class AuthService {
 
     const verificationToken = uuidv4();
     await this.usersService.setVerificationToken(String(user._id), verificationToken);
-    this.logger.log(`Verification token for ${user.email}: ${verificationToken}`);
+    this.mailService
+      .sendVerifyEmail(user.email, user.name, verificationToken)
+      .catch((err) =>
+        this.logger.error(`Failed to send verification email to ${user.email}`, err?.stack),
+      );
 
     const tokens = await this.generateTokens(user);
     await this.usersService.setRefreshToken(String(user._id), tokens.refreshToken);
@@ -174,7 +180,11 @@ export class AuthService {
     const expires = new Date(Date.now() + 3600000); // 1 hour
     await this.usersService.setResetPasswordToken(String(user._id), resetToken, expires);
 
-    this.logger.log(`Password reset token generated for ${user.email}: ${resetToken}`);
+    this.mailService
+      .sendResetPassword(user.email, user.name, resetToken)
+      .catch((err) =>
+        this.logger.error(`Failed to send reset password email to ${user.email}`, err?.stack),
+      );
 
     return { message: 'If this email exists, a reset link has been sent' };
   }

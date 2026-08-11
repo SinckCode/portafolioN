@@ -38,6 +38,23 @@ export class CommentsController {
   }
 
   @ApiBearerAuth()
+  @Get('my')
+  findMy(
+    @CurrentUser('_id') userId: string,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    return this.commentsService.findByAuthor(userId, paginationDto);
+  }
+
+  @ApiBearerAuth()
+  @Get('pending')
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'editor')
+  findPending(@Query() paginationDto: PaginationDto) {
+    return this.commentsService.findPending(paginationDto);
+  }
+
+  @ApiBearerAuth()
   @Post()
   create(
     @Body() createCommentDto: CreateCommentDto,

@@ -10,6 +10,10 @@ import helmet from 'helmet';
 import { join } from 'path';
 import type { Request, Response, NextFunction } from 'express';
 import { AppModule } from './app.module';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { MongoExceptionFilter } from './common/filters/mongo-exception.filter';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -53,6 +57,13 @@ async function bootstrap() {
       transformOptions: { enableImplicitConversion: true },
     }),
   );
+
+  // Global exception filters (NestJS applies in reverse order — last registered runs first)
+  // MongoExceptionFilter registered first so HttpExceptionFilter runs first for HTTP exceptions
+  app.useGlobalFilters(new MongoExceptionFilter(), new HttpExceptionFilter());
+
+  // Global interceptors
+  app.useGlobalInterceptors(new LoggingInterceptor(), new TransformInterceptor());
 
   // Swagger solo fuera de producción: no exponer la superficie del API en público
   if (!isProd) {

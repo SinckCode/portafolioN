@@ -26,6 +26,14 @@ export class CertificatesService {
     return cert;
   }
 
+  async findByUser(userId: string): Promise<Certificate[]> {
+    return this.certModel
+      .find({ user: userId })
+      .populate('course', 'title slug')
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
   async generate(userId: string, courseId: string, enrollmentId: string): Promise<Certificate> {
     const certificateNumber = `AO-${Date.now().toString(36).toUpperCase()}-${uuid().split('-')[0].toUpperCase()}`;
     return this.certModel.create({

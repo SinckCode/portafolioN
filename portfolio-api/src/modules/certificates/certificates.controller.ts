@@ -1,7 +1,8 @@
 import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CertificatesService } from './certificates.service';
 import { Public } from '../../common/decorators/public.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -10,6 +11,12 @@ import { Roles } from '../../common/decorators/roles.decorator';
 @Controller('certificates')
 export class CertificatesController {
   constructor(private readonly certificatesService: CertificatesService) {}
+
+  @ApiBearerAuth()
+  @Get('my')
+  findMy(@CurrentUser('_id') userId: string) {
+    return this.certificatesService.findByUser(userId);
+  }
 
   @Public()
   @Get(':id')

@@ -94,6 +94,9 @@ export const api = {
   getComments: (targetType: string, targetId: string) =>
     fetchApi(`/comments?targetType=${targetType}&targetId=${targetId}`),
 
+  getMyComments: (token: string) =>
+    fetchApi('/comments/my', { token }),
+
   createComment: (data: unknown, token: string) =>
     fetchApi('/comments', { method: 'POST', body: JSON.stringify(data), token }),
 
@@ -247,6 +250,9 @@ export const api = {
 
   // Certificates
   getCertificate: (id: string) => fetchApi(`/certificates/${id}`),
+
+  getMyCertificates: (token: string) =>
+    fetchApi('/certificates/my', { token }),
 
   generateCertificate: (data: unknown, token: string) =>
     fetchApi('/certificates/generate', { method: 'POST', body: JSON.stringify(data), token }),
