@@ -58,6 +58,12 @@
 // (padding/margin), que viven en @layer utilities. El preflight de
 // Tailwind ya aplica ese reset dentro de su layer.
 
+:root {
+  --font-body: 'Inter Variable', system-ui, sans-serif;
+  --font-display: 'Space Grotesk Variable', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+}
+
 html {
   scroll-behavior: smooth;
 }
