@@ -62,7 +62,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.13.0
+        uses: zaproxy/action-baseline@v0.15.0
         with:
           target: ${{ secrets.API_URL || 'https://api.angelonesto.com' }}
           rules_file_name: 'security-tests/zap-baseline.conf'
