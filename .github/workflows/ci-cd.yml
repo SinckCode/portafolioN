@@ -76,11 +76,15 @@ jobs:
     steps:
       - name: Deploy via Deploy API
         run: |
-          curl -sf -X POST \
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
             "https://deploy.angelonesto.com/deploy/portfolio-api" \
             -H "Authorization: Bearer ${{ secrets.DEPLOY_TOKEN }}" \
             -H "Content-Type: application/json" \
-            --max-time 120
+            --max-time 120)
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          echo "$BODY"
+          [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ] || { echo "::error::Deploy failed (HTTP $HTTP_CODE)"; exit 1; }
 
       - name: Verify deployment
         run: |
@@ -95,11 +99,15 @@ jobs:
     steps:
       - name: Deploy via Deploy API
         run: |
-          curl -sf -X POST \
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
             "https://deploy.angelonesto.com/deploy/portfolio-frontend" \
             -H "Authorization: Bearer ${{ secrets.DEPLOY_TOKEN }}" \
             -H "Content-Type: application/json" \
-            --max-time 600
+            --max-time 600)
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          echo "$BODY"
+          [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ] || { echo "::error::Deploy failed (HTTP $HTTP_CODE)"; exit 1; }
 
       - name: Verify deployment
         run: |
