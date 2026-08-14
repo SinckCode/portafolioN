@@ -1,6 +1,7 @@
 import { Controller, Post, Get, Patch, Body, Query, Res, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { Throttle } from '@nestjs/throttler';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -72,12 +73,14 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ auth: { ttl: 60000, limit: 5 } })
   @Post('register')
   register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
 
   @Public()
+  @Throttle({ auth: { ttl: 60000, limit: 5 } })
   @UseGuards(AuthGuard('local'))
   @Post('login')
   login(@Body() loginDto: LoginDto) {
@@ -97,6 +100,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ auth: { ttl: 60000, limit: 3 } })
   @Post('forgot-password')
   forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     return this.authService.forgotPassword(forgotPasswordDto);
