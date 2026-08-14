@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Types, Schema as MongooseSchema } from 'mongoose';
 
 export type ProjectDocument = Project & Document;
 
@@ -26,20 +26,29 @@ export class Project {
   @Prop()
   date!: Date;
 
-  @Prop({ type: [{ label: String, url: String }], default: [] })
-  repos!: { label: string; url: string }[];
+  @Prop({ type: Object, default: {} })
+  repos!: Record<string, string>;
 
   @Prop({ default: '' })
   demo!: string;
 
-  @Prop({ type: [{ label: String, url: String }], default: [] })
-  demos!: { label: string; url: string }[];
+  @Prop({ type: [String], default: [] })
+  demos!: string[];
 
   @Prop({ type: [String], default: [] })
   images!: string[];
 
+  @Prop({ default: '' })
+  video!: string;
+
   @Prop({ type: [String], default: [] })
   videos!: string[];
+
+  @Prop({ type: Object, default: null })
+  credentials!: { email: string; password: string } | null;
+
+  @Prop({ type: MongooseSchema.Types.Mixed, default: null })
+  api!: string | Record<string, string> | null;
 
   @Prop({ default: false })
   featured!: boolean;
