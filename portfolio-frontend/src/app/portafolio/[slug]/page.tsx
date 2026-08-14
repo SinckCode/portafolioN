@@ -4,9 +4,24 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import projects from '@/data/projects';
+import staticProjects from '@/data/projects';
+import { Project } from '@/types';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://angelonesto.com';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+
+async function getProject(slug: string): Promise<Project | undefined> {
+  try {
+    const res = await fetch(`${API_URL}/projects/${slug}`, {
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return staticProjects.find((p) => p.slug === slug);
+    const json = await res.json();
+    return (json.data || json) as Project;
+  } catch {
+    return staticProjects.find((p) => p.slug === slug);
+  }
+}
 
 export async function generateMetadata({
   params,
@@ -14,7 +29,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const project = projects.find((p) => p.slug === slug);
+  const project = await getProject(slug);
   if (!project) return { title: 'Proyecto no encontrado' };
 
   return {
@@ -32,7 +47,7 @@ export async function generateMetadata({
 }
 
 export function generateStaticParams() {
-  return projects
+  return staticProjects
     .filter((p) => p.slug)
     .map((project) => ({ slug: project.slug! }));
 }
@@ -43,7 +58,7 @@ export default async function ProjectDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const project = projects.find((p) => p.slug === slug);
+  const project = await getProject(slug);
 
   if (!project) {
     notFound();

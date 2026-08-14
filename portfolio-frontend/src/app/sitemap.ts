@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import projects from '@/data/projects';
+import staticProjects from '@/data/projects';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://angelonesto.com';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
@@ -31,21 +31,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/contacto`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
   ];
 
-  // Proyectos: fuente estática local (SSG)
-  const projectRoutes: MetadataRoute.Sitemap = projects
-    .filter((p) => p.slug)
-    .map((p) => ({
-      url: `${BASE_URL}/portafolio/${p.slug}`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    }));
-
-  // Posts y cursos publicados: dinámicos desde el CMS
-  const [posts, courses] = await Promise.all([
+  // Proyectos, posts y cursos: dinámicos desde el CMS, con fallback estático para proyectos
+  const [apiProjects, posts, courses] = await Promise.all([
+    fetchSlugs('/projects?limit=100'),
     fetchSlugs('/posts?status=published&limit=100'),
     fetchSlugs('/courses?limit=100'),
   ]);
+
+  const projectSlugs: SlugItem[] = apiProjects.length > 0
+    ? apiProjects
+    : staticProjects.filter((p) => p.slug).map((p) => ({ slug: p.slug! }));
+
+  const projectRoutes: MetadataRoute.Sitemap = projectSlugs.map((p) => ({
+    url: `${BASE_URL}/portafolio/${p.slug}`,
+    lastModified: p.updatedAt ? new Date(p.updatedAt) : new Date(),
+    changeFrequency: 'monthly',
+    priority: 0.7,
+  }));
 
   const postRoutes: MetadataRoute.Sitemap = posts.map((p) => ({
     url: `${BASE_URL}/blog/${p.slug}`,
