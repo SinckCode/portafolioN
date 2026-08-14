@@ -26,7 +26,9 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
     throw new Error(error.message || `HTTP ${res.status}`);
   }
 
-  return res.json();
+  const json = await res.json();
+  // El TransformInterceptor del backend envuelve todo en { data: ... }
+  return json.data !== undefined ? json.data : json;
 }
 
 export const api = {
