@@ -1,6 +1,8 @@
 import { MetadataRoute } from 'next';
 import staticProjects from '@/data/projects';
 
+export const dynamic = 'force-dynamic';
+
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://angelonesto.com';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
@@ -13,10 +15,11 @@ interface SlugItem {
 // Trae slugs del CMS; si el API no responde, el sitemap sigue funcionando
 async function fetchSlugs(path: string): Promise<SlugItem[]> {
   try {
-    const res = await fetch(`${API_URL}${path}`, { next: { revalidate: 3600 } });
+    const res = await fetch(`${API_URL}${path}`, { cache: 'no-store' });
     if (!res.ok) return [];
     const json = await res.json();
-    return (json.data || []) as SlugItem[];
+    const data = json.data;
+    return Array.isArray(data) ? data : [];
   } catch {
     return [];
   }
