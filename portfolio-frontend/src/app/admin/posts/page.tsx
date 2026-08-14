@@ -43,6 +43,11 @@ export default function AdminPosts() {
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [form, setForm] = useState(emptyForm);
+  const [showGenerate, setShowGenerate] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [genTopic, setGenTopic] = useState('');
+  const [genStyle, setGenStyle] = useState('guide');
+  const [genLang, setGenLang] = useState('es');
 
   const fetchPosts = useCallback(async () => {
     try {
@@ -132,6 +137,25 @@ export default function AdminPosts() {
     fetchPosts();
   }
 
+  async function handleGenerate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!genTopic.trim()) return;
+    setGenerating(true);
+    try {
+      await api.generateBlogPost(
+        { topic: genTopic, style: genStyle, language: genLang },
+        accessToken!,
+      );
+      setShowGenerate(false);
+      setGenTopic('');
+      fetchPosts();
+    } catch (err: any) {
+      alert(`Error generando: ${err.message}`);
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   async function toggleStatus(id: string, current: string) {
     await api.updatePost(
       id,
@@ -145,13 +169,59 @@ export default function AdminPosts() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="admin-page__title">Posts del Blog</h1>
-        <button
-          onClick={() => (showForm ? resetForm() : setShowForm(true))}
-          className="btn btn--primary"
-        >
-          {showForm ? 'Cancelar' : '+ Nuevo Post'}
-        </button>
+        <div className="flex gap-3">
+          {isAdmin && (
+            <button
+              onClick={() => setShowGenerate((v) => !v)}
+              className="btn btn--ghost"
+            >
+              {showGenerate ? 'Cancelar' : 'Generar con IA'}
+            </button>
+          )}
+          <button
+            onClick={() => (showForm ? resetForm() : setShowForm(true))}
+            className="btn btn--primary"
+          >
+            {showForm ? 'Cancelar' : '+ Nuevo Post'}
+          </button>
+        </div>
       </div>
+
+      {showGenerate && (
+        <form onSubmit={handleGenerate} className="admin-card p-6 mb-6 space-y-4">
+          <p className="admin-form__label">Generar post con IA</p>
+          <input
+            placeholder="Tema del artículo (ej: Introducción a Docker)"
+            value={genTopic}
+            onChange={(e) => setGenTopic(e.target.value)}
+            className="input"
+            required
+          />
+          <div className="flex flex-wrap gap-4">
+            <select
+              value={genStyle}
+              onChange={(e) => setGenStyle(e.target.value)}
+              className="select"
+            >
+              <option value="guide">Guía</option>
+              <option value="tutorial">Tutorial</option>
+              <option value="opinion">Opinión</option>
+              <option value="review">Review</option>
+            </select>
+            <select
+              value={genLang}
+              onChange={(e) => setGenLang(e.target.value)}
+              className="select"
+            >
+              <option value="es">Español</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+          <button type="submit" className="btn btn--primary" disabled={generating}>
+            {generating ? 'Generando… (10-30s)' : 'Generar borrador'}
+          </button>
+        </form>
+      )}
 
       {showForm && (
         <form onSubmit={handleSubmit} className="admin-card p-6 mb-6 space-y-4">

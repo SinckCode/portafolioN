@@ -277,6 +277,10 @@ export const api = {
 
   deleteFile: (filename: string, token: string) =>
     fetchApi(`/upload/${filename}`, { method: 'DELETE', token }),
+
+  // AI Generation (admin)
+  generateBlogPost: (data: { topic: string; style?: string; language?: string; targetKeywords?: string[] }, token: string) =>
+    fetchApi('/generation/blog', { method: 'POST', body: JSON.stringify(data), token }),
 };
 
 export default api;

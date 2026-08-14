@@ -23,6 +23,7 @@ import { SiteConfigModule } from './modules/site-config/site-config.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { MailModule } from './modules/mail/mail.module';
 import { HealthModule } from './modules/health/health.module';
+import { GenerationModule } from './modules/generation/generation.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { HealthModule } from './modules/health/health.module';
     AnalyticsModule,
     MailModule,
     HealthModule,
+    GenerationModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

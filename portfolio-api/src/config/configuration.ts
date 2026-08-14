@@ -40,6 +40,9 @@ const configuration = () => ({
     pass: process.env.SMTP_PASS || '',
     from: process.env.MAIL_FROM || 'noreply@angelonesto.com',
   },
+  generation: {
+    anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
+  },
 });
 
 export default configuration;
