@@ -1,43 +1,16 @@
 {
   "name": "mi-portfolio-3d",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
-  "dependencies": {
-    "@emailjs/browser": "^4.4.1",
-    "@testing-library/dom": "^10.4.0",
-    "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.3.0",
-    "@testing-library/user-event": "^13.5.0",
-    "framer-motion": "^12.20.1",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "react-scripts": "5.0.1",
-    "react-scroll": "^1.9.3",
-    "three": "^0.178.0",
-    "web-vitals": "^2.1.4"
-  },
+  "description": "Monorepo for angelonesto.com — Next.js frontend + NestJS API",
+  "author": "Angel David Onesto Frias",
+  "license": "MIT",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "dev:api": "cd portfolio-api && npm run start:dev",
+    "dev:frontend": "cd portfolio-frontend && npm run dev",
+    "build:api": "cd portfolio-api && npm run build",
+    "build:frontend": "cd portfolio-frontend && npm run build",
+    "test:api": "cd portfolio-api && npm test",
+    "seed": "cd portfolio-api && npm run seed"
   }
 }

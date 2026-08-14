@@ -57,31 +57,6 @@ const projects = {
     ],
   },
 
-  // === VM 100 LOCAL — legacy (se conservan como respaldo/rollback) ===
-  portafolio: {
-    description: 'Portafolio CRA legacy (rollback)',
-    local: true,
-    commands: [
-      'cd /home/onesto/portafolioN',
-      'git pull origin main',
-      'npm install',
-      'npm run build',
-      'sudo rm -rf /var/www/portafolioN/*',
-      'sudo cp -a build/. /var/www/portafolioN/',
-      'sudo systemctl reload apache2'
-    ]
-  },
-  'mi-api': {
-    description: 'API Express legacy (rollback)',
-    local: true,
-    commands: [
-      'cd /home/onesto/mi-api',
-      'git pull origin main',
-      'npm install',
-      'pm2 restart mi-api'
-    ]
-  },
-
   // === VM 104 (system node v18, no NVM) ===
   astrocloud: {
     description: 'AstroCloud (astrocloud.dev)',

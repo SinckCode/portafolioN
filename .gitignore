@@ -1,30 +1,7 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-
-# testing
-/coverage
-
-# production
-/build
-
-# misc
-.DS_Store
-*.tsbuildinfo
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# === monorepo: subapps ===
+# === monorepo: dependencias y artefactos ===
 **/node_modules
+/coverage
+*.tsbuildinfo
 portfolio-frontend/.next
 portfolio-frontend/out
 portfolio-api/dist
@@ -32,7 +9,8 @@ infra/deploy-api/node_modules
 
 # === secretos (NUNCA subir) ===
 .env
-.env.production
+.env.*
+!.env.example
 portfolio-api/.env
 portfolio-api/.env.production
 portfolio-frontend/.env.production
@@ -49,5 +27,14 @@ portfolio-frontend/public/projects/**/*.mp4
 # === mockups de diseño (se guardan local, no en git) ===
 stitch_ao_full_stack_portfolio*
 
-# archivo temporal de trabajo
+# === legacy CRA (eliminado, ignorar si aparecen localmente) ===
+/src
+/build
+/public
+
+# === misc ===
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 infra/deploy-api-server.current.js
