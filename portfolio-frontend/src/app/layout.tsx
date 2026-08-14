@@ -32,6 +32,9 @@ export const metadata: Metadata = {
     description:
       'Desarrollador Full Stack & DevOps. Portfolio de proyectos web, IoT, mobile y mas.',
   },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION || '',
+  },
 };
 
 export default function RootLayout({

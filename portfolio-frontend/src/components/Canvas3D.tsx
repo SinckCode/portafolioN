@@ -2,12 +2,6 @@
 
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-
-// Canvas 3D con las mejoras del rediseño de la SPA: callbacks de carga,
-// controles que no secuestran el scroll, movimiento ligado al scroll,
-// fade tras el hero y pausa cuando la pestaña no es visible.
 
 interface Canvas3DProps {
   onProgress?: (pct: number) => void;
@@ -27,6 +21,88 @@ const isWebGLAvailable = () => {
   }
 };
 
+// Genera posiciones de particulas en forma toroidal
+function generateTorusPositions(count: number): Float32Array {
+  const positions = new Float32Array(count * 3);
+  const majorRadius = 2.8;
+  const minorRadius = 1.2;
+
+  for (let i = 0; i < count; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.random() * Math.PI * 2;
+    // Dispersión para que no sea un toroide perfecto
+    const spread = 0.6;
+    const r = minorRadius + (Math.random() - 0.5) * spread;
+
+    positions[i * 3] = (majorRadius + r * Math.cos(phi)) * Math.cos(theta);
+    positions[i * 3 + 1] = r * Math.sin(phi) * 0.6; // aplanar un poco en Y
+    positions[i * 3 + 2] = (majorRadius + r * Math.cos(phi)) * Math.sin(theta);
+  }
+  return positions;
+}
+
+const vertexShader = /* glsl */ `
+  uniform float uTime;
+  uniform vec2 uMouse;
+  uniform float uPixelRatio;
+
+  attribute float aScale;
+  attribute float aPhase;
+
+  varying float vAlpha;
+  varying float vDistFromCenter;
+
+  void main() {
+    vec3 pos = position;
+
+    // Pulso suave individual por partícula
+    float pulse = sin(uTime * 0.8 + aPhase) * 0.08;
+    pos *= 1.0 + pulse;
+
+    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+
+    // Repulsión del mouse en screen space
+    vec2 screenPos = (projectionMatrix * mvPosition).xy / (projectionMatrix * mvPosition).w;
+    float distToMouse = distance(screenPos, uMouse);
+    float repulsion = smoothstep(0.35, 0.0, distToMouse) * 0.4;
+    mvPosition.xy += normalize(screenPos - uMouse + 0.001) * repulsion;
+
+    // Tamaño basado en distancia y escala individual
+    float size = aScale * (3.0 + pulse * 2.0) * uPixelRatio;
+    gl_PointSize = size * (300.0 / -mvPosition.z);
+    gl_Position = projectionMatrix * mvPosition;
+
+    // Alpha: más brillante cuando cerca del mouse
+    float brightness = smoothstep(0.4, 0.0, distToMouse) * 0.5;
+    vAlpha = 0.5 + brightness + pulse * 0.2;
+    vDistFromCenter = length(pos.xz) / 4.0;
+  }
+`;
+
+const fragmentShader = /* glsl */ `
+  varying float vAlpha;
+  varying float vDistFromCenter;
+
+  void main() {
+    // Punto circular suave con glow
+    float dist = length(gl_PointCoord - vec2(0.5));
+    if (dist > 0.5) discard;
+
+    float alpha = smoothstep(0.5, 0.1, dist) * vAlpha;
+    // Color primario #00b4d8 = rgb(0, 180, 216) / 255
+    vec3 coreColor = vec3(0.0, 0.706, 0.847);
+    // Variación tonal sutil según distancia del centro
+    vec3 edgeColor = vec3(0.0, 0.55, 0.75);
+    vec3 color = mix(coreColor, edgeColor, vDistFromCenter);
+
+    // Glow extra en el centro del punto
+    float glow = smoothstep(0.5, 0.0, dist) * 0.3;
+    color += glow;
+
+    gl_FragColor = vec4(color, alpha * 0.85);
+  }
+`;
+
 export default function Canvas3D({ onProgress, onLoaded, onError }: Canvas3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const callbacksRef = useRef({ onProgress, onLoaded, onError });
@@ -36,16 +112,8 @@ export default function Canvas3D({ onProgress, onLoaded, onError }: Canvas3DProp
     if (!containerRef.current) return undefined;
     const container = containerRef.current;
 
-    const emit = <K extends keyof typeof callbacksRef.current>(
-      name: K,
-      ...args: unknown[]
-    ) => {
-      const cb = callbacksRef.current[name] as ((...a: unknown[]) => void) | undefined;
-      if (cb) cb(...args);
-    };
-
     if (!isWebGLAvailable()) {
-      emit('onError', new Error('WebGL no disponible'));
+      callbacksRef.current.onError?.(new Error('WebGL no disponible'));
       return undefined;
     }
 
@@ -53,7 +121,7 @@ export default function Canvas3D({ onProgress, onLoaded, onError }: Canvas3DProp
     try {
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     } catch (err) {
-      emit('onError', err);
+      callbacksRef.current.onError?.(err);
       return undefined;
     }
 
@@ -62,113 +130,112 @@ export default function Canvas3D({ onProgress, onLoaded, onError }: Canvas3DProp
     ).matches;
 
     const scene = new THREE.Scene();
-    scene.background = null; // el gradiente CSS del contenedor se ve detrás
+    scene.background = null;
 
     const camera = new THREE.PerspectiveCamera(
       50,
       window.innerWidth / window.innerHeight,
       0.1,
-      5000
+      100
     );
-    camera.position.set(0, 1, 5);
+    camera.position.set(0, 1, 7);
+    camera.lookAt(0, 0, 0);
 
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const pixelRatio = Math.min(window.devicePixelRatio, 2);
+    renderer.setPixelRatio(pixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.domElement.style.touchAction = 'pan-y';
     container.appendChild(renderer.domElement);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambientLight);
+    // Partículas procedurales
+    const PARTICLE_COUNT = 1800;
+    const positions = generateTorusPositions(PARTICLE_COUNT);
+    const scales = new Float32Array(PARTICLE_COUNT);
+    const phases = new Float32Array(PARTICLE_COUNT);
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      scales[i] = 0.4 + Math.random() * 0.8;
+      phases[i] = Math.random() * Math.PI * 2;
+    }
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(5, 10, 7.5);
-    scene.add(directionalLight);
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('aScale', new THREE.BufferAttribute(scales, 1));
+    geometry.setAttribute('aPhase', new THREE.BufferAttribute(phases, 1));
 
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.enableZoom = false;
-    controls.enablePan = false;
-    controls.rotateSpeed = 0.5;
-    // Órbita vertical limitada a ±0.4 rad alrededor del ecuador
-    controls.minPolarAngle = Math.PI / 2 - 0.4;
-    controls.maxPolarAngle = Math.PI / 2 + 0.4;
-    // Un dedo rota; el scroll táctil vertical no se secuestra
-    controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
+    const uniforms = {
+      uTime: { value: 0 },
+      uMouse: { value: new THREE.Vector2(0, 0) },
+      uPixelRatio: { value: pixelRatio },
+    };
 
-    let model: THREE.Group | null = null;
-    let autoRotation = 0;
+    const material = new THREE.ShaderMaterial({
+      vertexShader,
+      fragmentShader,
+      uniforms,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
 
-    const loader = new GLTFLoader();
-    loader.load(
-      '/portafolio.glb',
-      (gltf) => {
-        model = gltf.scene;
+    const particles = new THREE.Points(geometry, material);
+    scene.add(particles);
 
-        const box = new THREE.Box3().setFromObject(model);
-        const center = box.getCenter(new THREE.Vector3());
-        const size = box.getSize(new THREE.Vector3()).length();
+    // Mouse tracking (normalizado a clip space -1..1)
+    const mouse = new THREE.Vector2(0, 0);
+    const handleMouseMove = (e: MouseEvent) => {
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    };
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
-        model.position.sub(center);
-        const scaleFactor = 10 / size;
-        model.scale.setScalar(scaleFactor);
-        model.position.y += 0.3;
-
-        scene.add(model);
-
-        controls.target.set(0, 0.3, 0);
-        controls.update();
-
-        emit('onLoaded');
-      },
-      (xhr) => {
-        if (xhr.total > 0) {
-          emit('onProgress', Math.min((xhr.loaded / xhr.total) * 100, 100));
-        }
-      },
-      (error) => {
-        console.error('Error loading GLTF model:', error);
-        emit('onError', error);
-      }
-    );
-
+    // Scroll tracking
     let scrollY = window.scrollY;
     const handleScroll = () => {
       scrollY = window.scrollY;
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
 
+    // Escena lista instantáneamente (sin descarga)
+    callbacksRef.current.onProgress?.(100);
+    requestAnimationFrame(() => {
+      callbacksRef.current.onLoaded?.();
+    });
+
+    // Animation loop
+    let autoRotation = 0;
     let animationId: number | null = null;
+    const clock = new THREE.Clock();
+
     const animate = () => {
       animationId = requestAnimationFrame(animate);
 
-      if (model) {
-        if (prefersReducedMotion) {
-          model.rotation.y = autoRotation;
-        } else {
-          autoRotation += 0.0015;
-          // El scroll aporta rotación extra
-          model.rotation.y = autoRotation + scrollY * 0.0006;
-        }
-      }
+      const elapsed = clock.getElapsedTime();
+      uniforms.uTime.value = elapsed;
+      uniforms.uMouse.value.lerp(mouse, 0.05); // suavizado
 
-      if (!prefersReducedMotion) {
+      if (prefersReducedMotion) {
+        particles.rotation.y = 0;
+      } else {
+        autoRotation += 0.0012;
+        particles.rotation.y = autoRotation + scrollY * 0.0004;
+
+        // Camera sube ligeramente con scroll
         const vh = window.innerHeight;
         const t = Math.min(scrollY / (vh * 2), 1);
-        camera.position.y = 1 + t * 0.6;
+        camera.position.y = 1 + t * 0.5;
 
-        // Fade a 35% tras el hero para dar contraste al contenido
+        // Fade tras el hero
         const fadeStart = vh * 0.4;
         const fadeEnd = vh * 1.1;
         const f = Math.min(Math.max((scrollY - fadeStart) / (fadeEnd - fadeStart), 0), 1);
         renderer.domElement.style.opacity = String(1 - f * 0.65);
       }
 
-      controls.update();
       renderer.render(scene, camera);
     };
     animate();
 
+    // Visibility
     const handleVisibility = () => {
       if (document.hidden) {
         if (animationId !== null) {
@@ -176,11 +243,13 @@ export default function Canvas3D({ onProgress, onLoaded, onError }: Canvas3DProp
           animationId = null;
         }
       } else if (animationId === null) {
+        clock.start();
         animate();
       }
     };
     document.addEventListener('visibilitychange', handleVisibility);
 
+    // Resize
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -191,9 +260,11 @@ export default function Canvas3D({ onProgress, onLoaded, onError }: Canvas3DProp
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('visibilitychange', handleVisibility);
       if (animationId !== null) cancelAnimationFrame(animationId);
-      controls.dispose();
+      geometry.dispose();
+      material.dispose();
       renderer.dispose();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
@@ -18,16 +18,8 @@ import ScrollProgress from '@/components/ScrollProgress';
 const Canvas3D = dynamic(() => import('@/components/Canvas3D'), { ssr: false });
 
 export default function Home() {
-  // Estado de carga del modelo 3D: loading | ready | error
   const [modelState, setModelState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [progress, setProgress] = useState(0);
-  const [timedOut, setTimedOut] = useState(false);
-
-  // El preloader nunca bloquea más de 8s
-  useEffect(() => {
-    const t = setTimeout(() => setTimedOut(true), 8000);
-    return () => clearTimeout(t);
-  }, []);
 
   const handleProgress = useCallback((pct: number) => setProgress(pct), []);
   const handleLoaded = useCallback(() => {
@@ -36,10 +28,37 @@ export default function Home() {
   }, []);
   const handleError = useCallback(() => setModelState('error'), []);
 
-  const showPreloader = modelState === 'loading' && !timedOut;
+  const showPreloader = modelState === 'loading';
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        name: 'Angel David Onesto Frias',
+        url: 'https://angelonesto.com',
+        description: 'Desarrollador Full Stack & DevOps. Portfolio de proyectos web, IoT, mobile y mas.',
+      },
+      {
+        '@type': 'Person',
+        name: 'Angel David Onesto Frias',
+        url: 'https://angelonesto.com',
+        jobTitle: 'Full Stack Developer & DevOps',
+        knowsAbout: ['React', 'Next.js', 'NestJS', 'Node.js', 'TypeScript', 'Docker', 'IoT', 'MongoDB'],
+        sameAs: [
+          'https://github.com/SinckCode',
+          'https://linkedin.com/in/angel-onesto',
+        ],
+      },
+    ],
+  };
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {modelState === 'error' ? (
         <CanvasFallback />
       ) : (
