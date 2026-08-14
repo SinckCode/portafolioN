@@ -16,11 +16,18 @@ export const metadata: Metadata = {
     'Desarrollador Full Stack & DevOps. Portfolio de proyectos web, IoT, mobile y mas.',
   keywords: ['Full Stack', 'DevOps', 'React', 'Next.js', 'NestJS', 'Portfolio'],
   authors: [{ name: 'Angel David Onesto Frias' }],
+  manifest: '/manifest.json',
   openGraph: {
     type: 'website',
     locale: 'es_MX',
     url: 'https://angelonesto.com',
     siteName: 'Angel Onesto Portfolio',
+    title: 'Angel David Onesto Frias | Full Stack Developer',
+    description:
+      'Desarrollador Full Stack & DevOps. Portfolio de proyectos web, IoT, mobile y mas.',
+  },
+  twitter: {
+    card: 'summary_large_image',
     title: 'Angel David Onesto Frias | Full Stack Developer',
     description:
       'Desarrollador Full Stack & DevOps. Portfolio de proyectos web, IoT, mobile y mas.',

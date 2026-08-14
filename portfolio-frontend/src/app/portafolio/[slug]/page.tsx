@@ -43,6 +43,12 @@ export async function generateMetadata({
       url: `${SITE_URL}/portafolio/${slug}`,
       ...(project.images?.[0] ? { images: [project.images[0]] } : {}),
     },
+    twitter: {
+      card: 'summary_large_image',
+      title: project.title,
+      description: project.description,
+      ...(project.images?.[0] ? { images: [project.images[0]] } : {}),
+    },
   };
 }
 
@@ -68,8 +74,27 @@ export default async function ProjectDetailPage({
   const allImages = project.images || [];
   const allVideos = project.videos || (project.video ? [project.video] : []);
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CreativeWork',
+    name: project.title,
+    description: project.description,
+    author: {
+      '@type': 'Person',
+      name: 'Angel David Onesto Frias',
+    },
+    dateCreated: project.date,
+    url: `${SITE_URL}/portafolio/${slug}`,
+    ...(allImages[0] ? { image: allImages[0] } : {}),
+    keywords: project.technologies.join(', '),
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Header />
       <main className="min-h-screen pt-24 pb-20">
         {/* Hero */}

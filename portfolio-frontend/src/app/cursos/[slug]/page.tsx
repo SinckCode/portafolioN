@@ -50,6 +50,12 @@ export async function generateMetadata({
       url: `${SITE_URL}/cursos/${course.slug}`,
       ...(course.coverImage ? { images: [course.coverImage] } : {}),
     },
+    twitter: {
+      card: 'summary_large_image',
+      title: course.title,
+      description,
+      ...(course.coverImage ? { images: [course.coverImage] } : {}),
+    },
   };
 }
 
