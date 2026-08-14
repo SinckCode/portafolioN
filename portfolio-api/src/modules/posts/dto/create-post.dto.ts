@@ -21,6 +21,11 @@ export class CreatePostDto {
   @IsString()
   content!: string;
 
+  @ApiPropertyOptional({ enum: ['markdown', 'html'] })
+  @IsOptional()
+  @IsString()
+  contentFormat?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

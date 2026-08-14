@@ -38,6 +38,9 @@ export class Post {
   @Prop({ required: true })
   content!: string;
 
+  @Prop({ type: String, enum: ['markdown', 'html'], default: 'markdown' })
+  contentFormat!: string;
+
   @Prop({ default: '' })
   coverImage!: string;
 

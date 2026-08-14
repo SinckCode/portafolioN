@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
+import DOMPurify from 'dompurify';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Header from '@/components/Header';
@@ -20,6 +21,7 @@ interface Post {
   slug: string;
   excerpt: string;
   content: string;
+  contentFormat?: string;
   coverImage?: string;
   author?: { name: string; avatar?: string };
   category?: { name: string; slug: string };
@@ -139,7 +141,18 @@ export default function BlogPostClient({ initialPost }: { initialPost?: Post | n
             )}
 
             <div className="blog-post__content">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
+              {post.contentFormat === 'html' ? (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(post.content, {
+                      ADD_TAGS: ['iframe'],
+                      ADD_ATTR: ['allow', 'allowfullscreen', 'frameborder', 'scrolling', 'data-callout-type'],
+                    }),
+                  }}
+                />
+              ) : (
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
+              )}
             </div>
 
             <footer className="blog-post__footer">

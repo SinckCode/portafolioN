@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
+import { marked } from 'marked';
 import { api } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
-import PostEditor from '@/components/admin/PostEditor';
+
+const TipTapEditor = dynamic(() => import('@/components/admin/TipTapEditor'), { ssr: false });
 
 interface Post {
   _id: string;
@@ -11,6 +14,7 @@ interface Post {
   slug: string;
   excerpt: string;
   content: string;
+  contentFormat?: string;
   tags: string[];
   status: string;
   category: { name: string } | null;
@@ -69,10 +73,15 @@ export default function AdminPosts() {
   }
 
   function openEditor(post: Post) {
+    // Si el post es markdown, convertirlo a HTML para TipTap
+    let content = post.content || '';
+    if (post.contentFormat !== 'html' && content) {
+      content = marked.parse(content, { async: false }) as string;
+    }
     setForm({
       title: post.title,
       excerpt: post.excerpt || '',
-      content: post.content || '',
+      content,
       tags: (post.tags || []).join(', '),
       status: post.status || 'draft',
       metaTitle: post.seo?.metaTitle || '',
@@ -92,6 +101,7 @@ export default function AdminPosts() {
       title: form.title,
       excerpt: form.excerpt,
       content: form.content,
+      contentFormat: 'html',
       tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
       status: form.status,
       seo: {
@@ -162,10 +172,16 @@ export default function AdminPosts() {
             className="input"
           />
 
-          {/* Editor visual */}
-          <PostEditor
+          {/* Editor visual TipTap */}
+          <TipTapEditor
             value={form.content}
             onChange={(content) => setForm({ ...form, content })}
+            onImageUpload={async (file) => {
+              const res = await api.uploadFile(file, accessToken!) as any;
+              const url = res.url || res.data?.url;
+              const origin = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || '';
+              return url.startsWith('http') ? url : `${origin}${url}`;
+            }}
           />
 
           <div className="flex flex-wrap items-center gap-4">
