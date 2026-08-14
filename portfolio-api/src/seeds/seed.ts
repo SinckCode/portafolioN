@@ -5,6 +5,11 @@ import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 
 async function seed() {
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+  if (!adminPassword) {
+    throw new Error('SEED_ADMIN_PASSWORD env var is required to run the seed');
+  }
+
   const app = await NestFactory.createApplicationContext(AppModule);
 
   // Seed admin user
@@ -13,7 +18,7 @@ async function seed() {
   if (!existingAdmin) {
     await userModel.create({
       email: 'admin@angelonesto.com',
-      passwordHash: await bcrypt.hash('ChangeMe123!', 12),
+      passwordHash: await bcrypt.hash(adminPassword, 12),
       name: 'Angel Onesto',
       role: 'admin',
       isVerified: true,

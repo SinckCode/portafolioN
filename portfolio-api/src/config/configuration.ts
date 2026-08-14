@@ -1,11 +1,19 @@
+function requiredEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
 const configuration = () => ({
   port: parseInt(process.env.PORT || '3001', 10),
   database: {
-    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/portfolio',
+    uri: requiredEnv('MONGODB_URI'),
   },
   jwt: {
-    secret: process.env.JWT_SECRET || 'change-me-super-secret',
-    refreshSecret: process.env.JWT_REFRESH_SECRET || 'change-me-refresh-secret',
+    secret: requiredEnv('JWT_SECRET'),
+    refreshSecret: requiredEnv('JWT_REFRESH_SECRET'),
     expiration: process.env.JWT_EXPIRATION || '15m',
     refreshExpiration: process.env.JWT_REFRESH_EXPIRATION || '7d',
   },

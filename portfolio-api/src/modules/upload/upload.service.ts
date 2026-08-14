@@ -72,10 +72,17 @@ export class UploadService {
   }
 
   async deleteFile(filename: string) {
-    const filepath = path.join(this.uploadDir, filename);
+    const sanitized = path.basename(filename);
+    if (sanitized !== filename) {
+      throw new BadRequestException('Invalid filename');
+    }
+    const filepath = path.join(this.uploadDir, sanitized);
+    if (!path.resolve(filepath).startsWith(path.resolve(this.uploadDir))) {
+      throw new BadRequestException('Invalid filename');
+    }
     if (fs.existsSync(filepath)) {
       fs.unlinkSync(filepath);
-      this.logger.log(`File deleted: ${filename}`);
+      this.logger.log(`File deleted: ${sanitized}`);
     }
   }
 }
