@@ -4,6 +4,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import configuration from './config/configuration';
+import { validate } from './config/env.validation';
 import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { AuthModule } from './modules/auth/auth.module';
@@ -28,6 +29,7 @@ import { HealthModule } from './modules/health/health.module';
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
+      validate,
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
@@ -36,7 +38,10 @@ import { HealthModule } from './modules/health/health.module';
         uri: configService.get<string>('database.uri'),
       }),
     }),
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    ThrottlerModule.forRoot([
+      { name: 'default', ttl: 60000, limit: 100 },
+      { name: 'auth', ttl: 60000, limit: 10 },
+    ]),
     AuthModule,
     UsersModule,
     ProjectsModule,

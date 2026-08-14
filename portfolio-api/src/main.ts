@@ -77,6 +77,8 @@ async function bootstrap() {
     SwaggerModule.setup('docs', app, document);
   }
 
+  app.enableShutdownHooks();
+
   const port = configService.get<number>('port', 3001);
   await app.listen(port);
   console.log(`Portfolio API running on http://localhost:${port}`);
