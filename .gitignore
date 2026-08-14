@@ -13,6 +13,7 @@
 
 # misc
 .DS_Store
+*.tsbuildinfo
 .env.local
 .env.development.local
 .env.test.local
@@ -44,6 +45,9 @@ portfolio-api/uploads
 # === media pesada (se sincroniza por rsync a la VM, no a git) ===
 portfolio-frontend/public/portafolio.glb
 portfolio-frontend/public/projects/**/*.mp4
+
+# === mockups de diseño (se guardan local, no en git) ===
+stitch_ao_full_stack_portfolio*
 
 # archivo temporal de trabajo
 infra/deploy-api-server.current.js
