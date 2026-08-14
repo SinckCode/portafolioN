@@ -24,7 +24,8 @@ function auth(req, res, next) {
 function run(cmd, opts = {}) {
   return new Promise((resolve, reject) => {
     // 10 min: next build en la VM puede pasar de 5 min
-    exec(cmd, { timeout: 600000, maxBuffer: 10 * 1024 * 1024, ...opts }, (err, stdout, stderr) => {
+    // shell: bash necesario para `source ~/.nvm/nvm.sh`
+    exec(cmd, { timeout: 600000, maxBuffer: 10 * 1024 * 1024, shell: '/bin/bash', ...opts }, (err, stdout, stderr) => {
       if (err) return reject({ error: err.message, stdout, stderr });
       resolve({ stdout, stderr });
     });
@@ -183,7 +184,7 @@ app.post('/deploy/:project', auth, async (req, res) => {
     const cmds = config.commands.join(' && ');
 
     if (config.local) {
-      fullCmd = cmds;
+      fullCmd = `${NVM_SOURCE} ${cmds}`;
     } else {
       const remoteCmd = config.useNvm ? `${NVM_SOURCE} ${cmds}` : cmds;
       const escaped = remoteCmd.replace(/"/g, '\\"');
