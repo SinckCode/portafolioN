@@ -1,70 +1,70 @@
-# Getting Started with Create React App
+# mi-portfolio-3d
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Monorepo for **angelonesto.com** — personal portfolio with 3D interactive background.
 
-## Available Scripts
+## Architecture
 
-In the project directory, you can run:
+```
+mi-portfolio-3d/
+  portfolio-frontend/   Next.js 15 + React 19 + Tailwind 4 + Three.js
+  portfolio-api/        NestJS 10 + MongoDB (Mongoose) + JWT auth
+  infra/                Terraform, Ansible, deploy API, monitoring
+```
 
-### `npm start`
+## Quick Start
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Prerequisites
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- Node.js 22+
+- MongoDB 8.0 (local or remote)
 
-### `npm test`
+### Backend (API)
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```bash
+cd portfolio-api
+cp .env.example .env        # fill in MONGODB_URI, JWT_SECRET, etc.
+npm install
+npm run seed                 # populate DB with initial data (requires SEED_ADMIN_PASSWORD)
+npm run start:dev            # http://localhost:4000/api
+```
 
-### `npm run build`
+### Frontend
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```bash
+cd portfolio-frontend
+cp .env.example .env.local   # set NEXT_PUBLIC_API_URL, NEXT_PUBLIC_SITE_URL
+npm install
+npm run dev                  # http://localhost:3000
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Both at once (from root)
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```bash
+npm run dev:api      # starts API in watch mode
+npm run dev:frontend # starts Next.js dev server
+```
 
-### `npm run eject`
+## Tech Stack
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+| Layer | Stack |
+|-------|-------|
+| Frontend | Next.js 15 (App Router), React 19, Tailwind CSS 4, Three.js, Framer Motion |
+| Backend | NestJS 10, Mongoose 8, Passport (JWT + OAuth), Sharp, Pino |
+| Database | MongoDB 8.0 |
+| Infra | Proxmox VMs, PM2, Nginx, GitHub Actions CI/CD |
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Features
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+- 3D interactive hero with `.glb` model
+- 17 portfolio projects with filtering, search, and detail pages
+- Blog with markdown content, likes, and comments
+- Course platform with modules, lessons, enrollment, and certificates
+- Admin panel with full CRUD for all content types
+- OAuth login (Google, GitHub) + email/password auth
+- Newsletter subscription
+- Analytics tracking
+- Responsive dark-mode design with glassmorphism effects
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## License
 
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+MIT

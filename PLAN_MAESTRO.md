@@ -47,7 +47,7 @@ ssh onesto@10.10.30.101
 | **Disco** | 30 GB (8.2 GB usado) |
 | **MongoDB** | 8.0.12, auth enabled, escucha en 10.10.30.101:27017 + 127.0.0.1:27017 |
 | **Docker** | 29.1.3 instalado |
-| **Credenciales** | admin / onesto01 (authSource: admin) |
+| **Credenciales** | ver .env (authSource: admin) |
 
 **Databases existentes:**
 
@@ -61,7 +61,7 @@ ssh onesto@10.10.30.101
 
 **Conexion desde VM 100 al MongoDB:**
 ```
-mongodb://admin:onesto01@10.10.30.101:27017/portfolio?authSource=admin
+mongodb://<USER>:<PASSWORD>@10.10.30.101:27017/portfolio?authSource=admin
 ```
 
 > **Nota:** MongoDB NO necesita Docker en VM 100 — ya corre nativo en VM 101 y acepta conexiones desde la red 10.10.20.x. Solo se necesita Docker en VM 100 para Redis y el stack de Grafana (Loki, Promtail, Grafana).
@@ -207,7 +207,7 @@ Y se puede integrar con GitHub Actions para CI/CD automatizado (trigger en push 
 1. **Instalar Docker + Docker Compose en VM 100** (solo para Redis y stack Grafana, NO para la app)
 2. **Actualizar Node.js** a v20 LTS
 3. **Aumentar recursos VM 100**: minimo 4 CPU / 4 GB RAM (idealmente 8 GB si corre Grafana stack)
-4. **Crear DB `portfolio`** en MongoDB VM 101: `mongosh -u admin -p onesto01 --authenticationDatabase admin --eval 'use portfolio'`
+4. **Crear DB `portfolio`** en MongoDB VM 101: `mongosh -u admin -p $MONGO_PASSWORD --authenticationDatabase admin --eval 'use portfolio'`
 5. **Reemplazar mi-api** por el nuevo NestJS backend (puede reutilizar :3000 o usar :3001)
 6. **Actualizar Cloudflare Tunnel** si se cambia el puerto de la API
 7. **Agregar proyectos** portfolio-api y portfolio-frontend a la deploy API
