@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 
@@ -10,6 +10,8 @@ const API_ORIGIN = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/ap
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get('returnUrl');
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
@@ -47,8 +49,12 @@ export default function LoginPage() {
         ? ((await api.getProfile(token).catch(() => null)) as { role?: string } | null)
         : null;
       const role = profile?.role;
-      // admin/editor → panel; alumnos → sus cursos
-      router.push(role === 'admin' || role === 'editor' ? '/admin' : '/perfil/cursos');
+      // Si hay returnUrl, redirigir ahí; sino admin/editor → panel; alumnos → sus cursos
+      if (returnUrl) {
+        router.push(returnUrl);
+      } else {
+        router.push(role === 'admin' || role === 'editor' ? '/admin' : '/perfil/cursos');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al iniciar sesion');
     } finally {

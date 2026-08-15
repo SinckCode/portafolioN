@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, ForbiddenException } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
+import { EnrollmentsService } from '../enrollments/enrollments.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -13,7 +14,10 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 @Controller('courses')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class CoursesController {
-  constructor(private readonly coursesService: CoursesService) {}
+  constructor(
+    private readonly coursesService: CoursesService,
+    private readonly enrollmentsService: EnrollmentsService,
+  ) {}
 
   @Public()
   @Get()
@@ -50,6 +54,29 @@ export class CoursesController {
   @Roles('admin', 'editor')
   remove(@Param('id') id: string, @CurrentUser() user: any) {
     return this.coursesService.remove(id, String(user._id), user.role);
+  }
+
+  @Get(':slug/lessons/:lessonSlug')
+  async getLesson(
+    @Param('slug') slug: string,
+    @Param('lessonSlug') lessonSlug: string,
+    @CurrentUser() user: any,
+  ) {
+    const course = await this.coursesService.findBySlugFull(slug);
+    const { lesson, moduleTitle } = this.coursesService.getLesson(course, lessonSlug);
+
+    // Free lessons are accessible without enrollment
+    if (!lesson.isFree) {
+      const enrolled = await this.enrollmentsService.isEnrolled(
+        String(user._id),
+        String(course._id),
+      );
+      if (!enrolled && user.role !== 'admin') {
+        throw new ForbiddenException('Debes inscribirte en el curso para acceder a esta leccion');
+      }
+    }
+
+    return { lesson, moduleTitle, courseTitle: course.title };
   }
 
   @Post(':id/review')

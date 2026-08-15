@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import FloatingMenu from '@/components/FloatingMenu';
 import Icon from '@/components/ui/Icon';
 import { useAuth } from '@/context/AuthContext';
+import { api } from '@/lib/api';
 import { NAV_LINKS } from '@/lib/navigation';
 
 const API_ORIGIN = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api').replace(/\/api$/, '');
@@ -19,6 +20,7 @@ export default function Header() {
   const { user, isAuthenticated, isStaff, logout } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Fuera del home el navbar siempre lleva fondo glass (no hay hero detrás)
@@ -53,6 +55,26 @@ export default function Header() {
       document.removeEventListener('keydown', onKey);
     };
   }, [menuOpen]);
+
+  // Poll unread message count
+  const fetchUnread = useCallback(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    if (!token || !isAuthenticated) return;
+    api.getUnreadCount(token).then((data: any) => {
+      setUnreadCount(data?.count || 0);
+    }).catch(() => {});
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 60000);
+    return () => clearInterval(interval);
+  }, [fetchUnread]);
+
+  // Refresh unread count on navigation
+  useEffect(() => {
+    fetchUnread();
+  }, [pathname, fetchUnread]);
 
   const isActive = (href: string) => {
     if (href.startsWith('/#')) return pathname === '/';
@@ -123,6 +145,39 @@ export default function Header() {
               </Link>
             ) : (
               <>
+                <Link
+                  href="/mensajes"
+                  className="navbar__messages-btn"
+                  title="Mensajes"
+                  style={{ position: 'relative', display: 'flex', alignItems: 'center', marginRight: '0.5rem' }}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--color-on-surface-variant)' }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  {unreadCount > 0 && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: '-4px',
+                        right: '-6px',
+                        background: '#ef4444',
+                        color: '#fff',
+                        fontSize: '0.65rem',
+                        fontWeight: 700,
+                        borderRadius: '9999px',
+                        minWidth: '16px',
+                        height: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '0 4px',
+                        lineHeight: 1,
+                      }}
+                    >
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </Link>
                 <button
                   type="button"
                   className="user-chip"
@@ -163,6 +218,15 @@ export default function Header() {
                       <Link href="/perfil/cursos" role="menuitem" onClick={() => setMenuOpen(false)}>
                         <Icon name="layers" size={16} />
                         Mis cursos
+                      </Link>
+                      <Link href="/mensajes" role="menuitem" onClick={() => setMenuOpen(false)}>
+                        <Icon name="mail" size={16} />
+                        Mensajes
+                        {unreadCount > 0 && (
+                          <span style={{ marginLeft: 'auto', background: '#ef4444', color: '#fff', fontSize: '0.65rem', fontWeight: 700, borderRadius: '9999px', padding: '1px 6px' }}>
+                            {unreadCount}
+                          </span>
+                        )}
                       </Link>
                       {isStaff && (
                         <Link href="/admin" role="menuitem" onClick={() => setMenuOpen(false)}>

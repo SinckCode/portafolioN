@@ -21,6 +21,22 @@ export class EnrollmentsService {
       .sort({ startedAt: -1 });
   }
 
+  async isEnrolled(userId: string, courseId: string): Promise<boolean> {
+    const enrollment = await this.enrollmentModel.findOne({ user: userId, course: courseId });
+    return !!enrollment;
+  }
+
+  async findByUserAndCourse(userId: string, courseId: string): Promise<Enrollment | null> {
+    return this.enrollmentModel.findOne({ user: userId, course: courseId });
+  }
+
+  async findByUserAndCourseSlug(userId: string, courseSlug: string): Promise<Enrollment | null> {
+    const enrollments = await this.enrollmentModel
+      .find({ user: userId })
+      .populate('course', 'slug');
+    return enrollments.find((e) => (e.course as any)?.slug === courseSlug) || null;
+  }
+
   async findById(id: string): Promise<Enrollment> {
     const enrollment = await this.enrollmentModel.findById(id).populate('course');
     if (!enrollment) throw new NotFoundException('Inscripcion no encontrada');

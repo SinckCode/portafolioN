@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
@@ -27,6 +27,14 @@ export default function Home() {
     setModelState('ready');
   }, []);
   const handleError = useCallback(() => setModelState('error'), []);
+
+  // Fallback: si Canvas3D no dispara onLoaded en 3s, forzar ready
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setModelState((prev) => (prev === 'loading' ? 'ready' : prev));
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const showPreloader = modelState === 'loading';
 

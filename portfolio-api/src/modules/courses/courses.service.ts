@@ -50,13 +50,46 @@ export class CoursesService {
     return { data, meta: { total, page: +page, limit: +limit, totalPages: Math.ceil(total / limit) } };
   }
 
-  async findBySlug(slug: string): Promise<Course> {
+  async findBySlug(slug: string): Promise<any> {
+    const course = await this.courseModel
+      .findOne({ slug })
+      .populate('instructor', 'name avatar bio')
+      .populate('category', 'name slug');
+    if (!course) throw new NotFoundException('Curso no encontrado');
+
+    // Strip lesson content (videoUrl, content) from public response
+    const obj = course.toObject();
+    if (obj.modules) {
+      obj.modules = obj.modules.map((mod: any) => ({
+        ...mod,
+        lessons: (mod.lessons || []).map((lesson: any) => ({
+          title: lesson.title,
+          slug: lesson.slug,
+          type: lesson.type,
+          duration: lesson.duration,
+          isFree: lesson.isFree,
+          order: lesson.order,
+        })),
+      }));
+    }
+    return obj;
+  }
+
+  async findBySlugFull(slug: string): Promise<Course> {
     const course = await this.courseModel
       .findOne({ slug })
       .populate('instructor', 'name avatar bio')
       .populate('category', 'name slug');
     if (!course) throw new NotFoundException('Curso no encontrado');
     return course;
+  }
+
+  getLesson(course: Course, lessonSlug: string) {
+    for (const mod of course.modules || []) {
+      const lesson = (mod.lessons || []).find((l) => l.slug === lessonSlug);
+      if (lesson) return { lesson, moduleTitle: mod.title };
+    }
+    throw new NotFoundException('Leccion no encontrada');
   }
 
   async update(

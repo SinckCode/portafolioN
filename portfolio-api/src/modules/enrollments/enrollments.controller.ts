@@ -21,6 +21,19 @@ export class EnrollmentsController {
     return this.enrollmentsService.findMyEnrollments(user._id);
   }
 
+  @Get('check/:courseSlug')
+  async checkEnrollment(
+    @CurrentUser() user: any,
+    @Param('courseSlug') courseSlug: string,
+  ) {
+    // Resolve course ID from slug, then check enrollment
+    const enrollment = await this.enrollmentsService.findByUserAndCourseSlug(
+      user._id,
+      courseSlug,
+    );
+    return { enrolled: !!enrollment, enrollment };
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.enrollmentsService.findById(id);

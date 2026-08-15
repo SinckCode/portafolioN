@@ -20,6 +20,11 @@ export class UsersController {
     return this.usersService.findAll(paginationDto);
   }
 
+  @Get('search')
+  searchUsers(@Query('q') query: string) {
+    return this.usersService.searchByName(query);
+  }
+
   @Get(':id')
   @UseGuards(RolesGuard)
   @Roles('admin')

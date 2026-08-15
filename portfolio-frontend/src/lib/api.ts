@@ -78,6 +78,12 @@ export const api = {
 
   getCourse: (slug: string) => fetchApi(`/courses/${slug}`),
 
+  getLesson: (courseSlug: string, lessonSlug: string, token: string) =>
+    fetchApi(`/courses/${courseSlug}/lessons/${lessonSlug}`, { token }),
+
+  checkEnrollment: (courseSlug: string, token: string) =>
+    fetchApi(`/enrollments/check/${courseSlug}`, { token }).catch(() => null),
+
   enrollCourse: (courseId: string, token: string) =>
     fetchApi('/enrollments', { method: 'POST', body: JSON.stringify({ courseId }), token }),
 
@@ -230,6 +236,9 @@ export const api = {
 
   getUser: (id: string, token: string) => fetchApi(`/users/${id}`, { token }),
 
+  searchUsers: (query: string, token: string) =>
+    fetchApi<{ _id: string; name: string }[]>(`/users/search?q=${encodeURIComponent(query)}`, { token }),
+
   updateUser: (id: string, data: unknown, token: string) =>
     fetchApi(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(data), token }),
 
@@ -277,6 +286,22 @@ export const api = {
 
   deleteFile: (filename: string, token: string) =>
     fetchApi(`/upload/${filename}`, { method: 'DELETE', token }),
+
+  // Messages
+  sendMessage: (data: { to: string; subject: string; body: string }, token: string) =>
+    fetchApi('/messages', { method: 'POST', body: JSON.stringify(data), token }),
+
+  getInbox: (token: string) => fetchApi('/messages/inbox', { token }),
+
+  getSent: (token: string) => fetchApi('/messages/sent', { token }),
+
+  getUnreadCount: (token: string) =>
+    fetchApi<{ count: number }>('/messages/unread-count', { token }),
+
+  getMessage: (id: string, token: string) => fetchApi(`/messages/${id}`, { token }),
+
+  deleteMessage: (id: string, token: string) =>
+    fetchApi(`/messages/${id}`, { method: 'DELETE', token }),
 
   // AI Generation (admin)
   generateBlogPost: (data: { topic: string; style?: string; language?: string; targetKeywords?: string[] }, token: string) =>

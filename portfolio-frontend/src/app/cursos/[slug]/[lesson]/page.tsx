@@ -15,34 +15,61 @@ interface FlatLesson {
   lessonIndex: number;
 }
 
+interface LessonData {
+  lesson: Lesson;
+  moduleTitle: string;
+  courseTitle: string;
+}
+
 export default function LessonPlayerPage() {
   const params = useParams();
   const router = useRouter();
-  const { accessToken } = useAuth();
+  const { user, accessToken, isLoading: authLoading } = useAuth();
 
   const courseSlug = params.slug as string;
   const lessonSlug = params.lesson as string;
 
   const [course, setCourse] = useState<Course | null>(null);
+  const [lessonData, setLessonData] = useState<LessonData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Fetch course data
+  // Wait for auth to finish loading before checking access
   useEffect(() => {
-    async function fetchCourse() {
+    if (authLoading) return;
+
+    // Not logged in — redirect to login
+    if (!user || !accessToken) {
+      router.push(`/login?returnUrl=/cursos/${courseSlug}/${lessonSlug}`);
+      return;
+    }
+
+    async function fetchData() {
       try {
         setLoading(true);
-        const data = await api.getCourse(courseSlug) as Course;
-        setCourse(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error al cargar el curso');
+        setAccessDenied(false);
+
+        // Fetch course metadata (public, no lesson content)
+        const courseData = await api.getCourse(courseSlug) as Course;
+        setCourse(courseData);
+
+        // Fetch lesson content (requires enrollment)
+        const lesson = await api.getLesson(courseSlug, lessonSlug, accessToken!) as LessonData;
+        setLessonData(lesson);
+      } catch (err: any) {
+        if (err.message?.includes('inscribirte') || err.message?.includes('403')) {
+          setAccessDenied(true);
+        } else {
+          setError(err instanceof Error ? err.message : 'Error al cargar la leccion');
+        }
       } finally {
         setLoading(false);
       }
     }
-    fetchCourse();
-  }, [courseSlug]);
+    fetchData();
+  }, [courseSlug, lessonSlug, user, accessToken, authLoading, router]);
 
   // Flatten all lessons for prev/next navigation
   const flatLessons = useMemo<FlatLesson[]>(() => {
@@ -56,12 +83,11 @@ export default function LessonPlayerPage() {
     );
   }, [course]);
 
-  // Find current lesson position
   const currentIndex = useMemo(() => {
     return flatLessons.findIndex((fl) => fl.lesson.slug === lessonSlug);
   }, [flatLessons, lessonSlug]);
 
-  const currentLesson = currentIndex >= 0 ? flatLessons[currentIndex].lesson : null;
+  const currentLesson = lessonData?.lesson || null;
   const prevLesson = currentIndex > 0 ? flatLessons[currentIndex - 1] : null;
   const nextLesson = currentIndex < flatLessons.length - 1 ? flatLessons[currentIndex + 1] : null;
 
@@ -71,8 +97,7 @@ export default function LessonPlayerPage() {
     api.trackPageview(`/cursos/${courseSlug}/${lessonSlug}`).catch(() => {});
   }, [currentLesson, accessToken, course, courseSlug, lessonSlug]);
 
-  // Loading state
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <>
         <Header />
@@ -88,7 +113,31 @@ export default function LessonPlayerPage() {
     );
   }
 
-  // Error state
+  if (accessDenied) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen pt-24 pb-20">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+              <svg className="w-16 h-16 text-on-surface-variant" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <h2 className="text-xl font-bold text-on-surface">Debes inscribirte para ver esta leccion</h2>
+              <p className="text-on-surface-variant text-center max-w-md">
+                Inscribete en el curso para acceder a todo el contenido. Es gratis y solo toma un momento.
+              </p>
+              <Link href={`/cursos/${courseSlug}`} className="btn btn--primary">
+                Ir al curso e inscribirme
+              </Link>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
   if (error || !course) {
     return (
       <>
@@ -110,7 +159,6 @@ export default function LessonPlayerPage() {
     );
   }
 
-  // Lesson not found
   if (!currentLesson) {
     return (
       <>
@@ -213,9 +261,6 @@ export default function LessonPlayerPage() {
                       <span className="chip chip--sm chip--primary">
                         {currentLesson.type === 'video' ? 'Video' : currentLesson.type === 'quiz' ? 'Quiz' : 'Texto'}
                       </span>
-                      {currentLesson.isFree && (
-                        <span className="chip chip--sm chip--active">Gratis</span>
-                      )}
                     </div>
                   </div>
                   <span className="text-xs text-on-surface-variant font-mono whitespace-nowrap">
@@ -223,7 +268,6 @@ export default function LessonPlayerPage() {
                   </span>
                 </div>
 
-                {/* Show text content below video if lesson has both */}
                 {currentLesson.videoUrl && currentLesson.content && (
                   <div
                     className="prose prose-invert max-w-none text-on-surface leading-relaxed mt-4 pt-4 border-t border-outline-variant"
@@ -277,7 +321,6 @@ export default function LessonPlayerPage() {
             {/* Sidebar - Module/Lesson list */}
             <aside className="w-full lg:w-80 shrink-0">
               <div className="glass-card sticky top-24 max-h-[calc(100vh-120px)] flex flex-col">
-                {/* Sidebar header */}
                 <div className="p-4 border-b border-outline-variant flex items-center justify-between">
                   <h2 className="text-sm font-semibold text-on-surface">
                     Contenido del curso
@@ -298,13 +341,11 @@ export default function LessonPlayerPage() {
                   </button>
                 </div>
 
-                {/* Sidebar content */}
                 <div
                   className={`overflow-y-auto flex-1 ${sidebarOpen ? '' : 'hidden lg:block'}`}
                 >
                   {course.modules.map((mod, mi) => (
                     <div key={mi}>
-                      {/* Module header */}
                       <div className="px-4 py-3 bg-[rgba(15,17,21,0.5)] border-b border-[#2a2d35]">
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-primary-container font-mono">
@@ -319,7 +360,6 @@ export default function LessonPlayerPage() {
                         </span>
                       </div>
 
-                      {/* Lessons list */}
                       {mod.lessons.map((lesson, li) => {
                         const isActive = lesson.slug === lessonSlug;
                         return (
@@ -336,7 +376,6 @@ export default function LessonPlayerPage() {
                             `}
                           >
                             <div className="flex items-center gap-3 min-w-0">
-                              {/* Play/text icon */}
                               <svg
                                 className={`w-4 h-4 shrink-0 ${isActive ? 'text-primary-container' : 'text-on-surface-variant'}`}
                                 fill="none"

@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { api } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
 
 interface Lesson {
   title: string;
@@ -64,13 +65,17 @@ function StarRating({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'lg
 
 export default function CourseDetailClient({ initialCourse }: { initialCourse?: Course | null }) {
   const params = useParams<{ slug: string }>();
+  const router = useRouter();
+  const { user, accessToken } = useAuth();
   const [course, setCourse] = useState<Course | null>(initialCourse ?? null);
   const [loading, setLoading] = useState(!initialCourse);
   const [notFound, setNotFound] = useState(false);
   const [openModule, setOpenModule] = useState<number | null>(0);
+  const [enrolled, setEnrolled] = useState(false);
+  const [enrolling, setEnrolling] = useState(false);
+  const [checkingEnrollment, setCheckingEnrollment] = useState(true);
 
   useEffect(() => {
-    // El server component ya trajo el curso
     if (initialCourse || !params?.slug) return;
     api
       .getCourse(params.slug)
@@ -79,12 +84,46 @@ export default function CourseDetailClient({ initialCourse }: { initialCourse?: 
       .finally(() => setLoading(false));
   }, [params?.slug, initialCourse]);
 
+  // Check enrollment status
+  useEffect(() => {
+    if (!accessToken || !params?.slug) {
+      setCheckingEnrollment(false);
+      return;
+    }
+    api
+      .checkEnrollment(params.slug, accessToken)
+      .then((data: any) => {
+        if (data?.enrolled) setEnrolled(true);
+      })
+      .catch(() => {})
+      .finally(() => setCheckingEnrollment(false));
+  }, [accessToken, params?.slug]);
+
+  async function handleEnroll() {
+    if (!user) {
+      router.push(`/login?returnUrl=/cursos/${course?.slug}`);
+      return;
+    }
+    if (!course || !accessToken) return;
+    setEnrolling(true);
+    try {
+      await api.enrollCourse(course._id, accessToken);
+      setEnrolled(true);
+    } catch (err: any) {
+      if (err.message?.includes('Ya estas inscrito')) {
+        setEnrolled(true);
+      }
+    } finally {
+      setEnrolling(false);
+    }
+  }
+
   if (loading) {
     return (
       <>
         <Header />
         <main className="min-h-screen pt-24 pb-20 flex items-center justify-center">
-          <p className="text-on-surface-variant">Cargando curso…</p>
+          <p className="text-on-surface-variant">Cargando curso...</p>
         </main>
         <Footer />
       </>
@@ -115,7 +154,7 @@ export default function CourseDetailClient({ initialCourse }: { initialCourse?: 
   const firstLesson = modules.flatMap((m) => m.lessons || [])[0];
 
   const includes = [
-    `${totalLessons} lecciones en ${modules.length} módulos`,
+    `${totalLessons} lecciones en ${modules.length} modulos`,
     course.duration ? `${course.duration} de contenido` : null,
     freeLessons > 0 ? `${freeLessons} lecciones gratis de muestra` : null,
     'Acceso desde cualquier dispositivo',
@@ -123,6 +162,47 @@ export default function CourseDetailClient({ initialCourse }: { initialCourse?: 
   ].filter(Boolean) as string[];
 
   const instructorName = course.instructor?.name || 'Angel Onesto';
+
+  const courseSlug = course.slug;
+  // Enrollment CTA button
+  function EnrollButton({ full = false }: { full?: boolean }) {
+    if (checkingEnrollment) {
+      return (
+        <button className={`btn btn--primary ${full ? 'btn--full' : ''}`} disabled>
+          Verificando...
+        </button>
+      );
+    }
+
+    if (enrolled && firstLesson) {
+      return (
+        <Link
+          href={`/cursos/${courseSlug}/${firstLesson.slug}`}
+          className={`btn btn--primary ${full ? 'btn--full' : ''} text-center block`}
+        >
+          Continuar curso
+        </Link>
+      );
+    }
+
+    if (!firstLesson) {
+      return (
+        <button className={`btn btn--primary ${full ? 'btn--full' : ''}`} disabled>
+          Proximamente
+        </button>
+      );
+    }
+
+    return (
+      <button
+        onClick={handleEnroll}
+        className={`btn btn--primary ${full ? 'btn--full' : ''}`}
+        disabled={enrolling}
+      >
+        {enrolling ? 'Inscribiendo...' : user ? 'Inscribirme gratis' : 'Iniciar sesion para inscribirme'}
+      </button>
+    );
+  }
 
   return (
     <>
@@ -156,7 +236,7 @@ export default function CourseDetailClient({ initialCourse }: { initialCourse?: 
                     <div className="flex items-center gap-2">
                       <StarRating rating={course.rating} size="lg" />
                       <span className="text-yellow-400 font-medium">{course.rating}</span>
-                      <span className="text-on-surface-variant">({course.reviewCount} reseñas)</span>
+                      <span className="text-on-surface-variant">({course.reviewCount} resenas)</span>
                     </div>
                   )}
                   <span className="text-on-surface-variant">
@@ -187,18 +267,9 @@ export default function CourseDetailClient({ initialCourse }: { initialCourse?: 
                       {course.price === 0 ? 'Gratis' : `$${course.price}`}
                     </span>
                   </div>
-                  {firstLesson ? (
-                    <Link
-                      href={`/cursos/${course.slug}/${firstLesson.slug}`}
-                      className="btn btn--primary btn--full mb-4 text-center block"
-                    >
-                      Comenzar curso
-                    </Link>
-                  ) : (
-                    <button className="btn btn--primary btn--full mb-4" disabled>
-                      Próximamente
-                    </button>
-                  )}
+                  <div className="mb-4">
+                    <EnrollButton full />
+                  </div>
                   <div className="space-y-3 pt-4 border-t border-outline-variant">
                     <p className="text-xs text-on-surface-variant uppercase tracking-wider font-semibold mb-3">
                       Este curso incluye
@@ -224,7 +295,7 @@ export default function CourseDetailClient({ initialCourse }: { initialCourse?: 
               {/* What you'll learn */}
               {course.whatYouLearn?.length > 0 && (
                 <section className="glass-card p-6 md:p-8">
-                  <h2 className="text-xl font-bold text-on-surface mb-6">Lo que aprenderás</h2>
+                  <h2 className="text-xl font-bold text-on-surface mb-6">Lo que aprenderas</h2>
                   <div className="grid sm:grid-cols-2 gap-3">
                     {course.whatYouLearn.map((item) => (
                       <div key={item} className="flex items-start gap-2">
@@ -285,40 +356,47 @@ export default function CourseDetailClient({ initialCourse }: { initialCourse?: 
                       </button>
                       {openModule === idx && (
                         <div className="course-detail__module-lessons">
-                          {(mod.lessons || []).map((lesson, li) => (
-                            <Link
-                              key={li}
-                              href={`/cursos/${course.slug}/${lesson.slug}`}
-                              className="course-detail__module-lesson"
-                            >
-                              <div className="flex items-center gap-3">
-                                <svg className="w-4 h-4 text-on-surface-variant" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  {lesson.type === 'text' ? (
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                    />
-                                  ) : (
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                                    />
+                          {(mod.lessons || []).map((lesson, li) => {
+                            const canAccess = enrolled || lesson.isFree;
+                            return (
+                              <div
+                                key={li}
+                                className={`course-detail__module-lesson ${!canAccess ? 'opacity-60' : ''}`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <svg className="w-4 h-4 text-on-surface-variant" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    {lesson.type === 'text' ? (
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                      />
+                                    ) : (
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                                      />
+                                    )}
+                                  </svg>
+                                  <span className="text-sm text-on-surface">{lesson.title}</span>
+                                  {lesson.isFree && (
+                                    <span className="chip chip--sm chip--primary">Gratis</span>
                                   )}
-                                </svg>
-                                <span className="text-sm text-on-surface">{lesson.title}</span>
-                                {lesson.isFree && (
-                                  <span className="chip chip--sm chip--primary">Gratis</span>
-                                )}
+                                  {!canAccess && (
+                                    <svg className="w-3.5 h-3.5 text-on-surface-variant" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                  )}
+                                </div>
+                                <span className="text-xs text-on-surface-variant">
+                                  {lesson.duration ? `${lesson.duration} min` : ''}
+                                </span>
                               </div>
-                              <span className="text-xs text-on-surface-variant">
-                                {lesson.duration ? `${lesson.duration} min` : ''}
-                              </span>
-                            </Link>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -336,22 +414,11 @@ export default function CourseDetailClient({ initialCourse }: { initialCourse?: 
                   </span>
                   <span className="text-sm text-on-surface-variant">{course.duration}</span>
                 </div>
-                {firstLesson ? (
-                  <Link
-                    href={`/cursos/${course.slug}/${firstLesson.slug}`}
-                    className="btn btn--primary btn--full text-center block"
-                  >
-                    Comenzar curso
-                  </Link>
-                ) : (
-                  <button className="btn btn--primary btn--full" disabled>
-                    Próximamente
-                  </button>
-                )}
+                <EnrollButton full />
               </div>
             </div>
 
-            {/* Desktop sidebar placeholder (the sticky card is in the hero) */}
+            {/* Desktop sidebar placeholder */}
             <div className="hidden lg:block w-80 shrink-0" />
           </div>
         </div>

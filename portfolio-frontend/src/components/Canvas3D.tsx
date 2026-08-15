@@ -21,22 +21,18 @@ const isWebGLAvailable = () => {
   }
 };
 
-// Genera posiciones de particulas en forma toroidal
-function generateTorusPositions(count: number): Float32Array {
+// Genera posiciones aleatorias en una esfera grande (cielo estrellado)
+function generateStarPositions(count: number): Float32Array {
   const positions = new Float32Array(count * 3);
-  const majorRadius = 2.8;
-  const minorRadius = 1.2;
-
   for (let i = 0; i < count; i++) {
+    // Distribución uniforme en esfera con radio entre 8 y 25
+    const radius = 8 + Math.random() * 17;
     const theta = Math.random() * Math.PI * 2;
-    const phi = Math.random() * Math.PI * 2;
-    // Dispersión para que no sea un toroide perfecto
-    const spread = 0.6;
-    const r = minorRadius + (Math.random() - 0.5) * spread;
+    const phi = Math.acos(2 * Math.random() - 1);
 
-    positions[i * 3] = (majorRadius + r * Math.cos(phi)) * Math.cos(theta);
-    positions[i * 3 + 1] = r * Math.sin(phi) * 0.6; // aplanar un poco en Y
-    positions[i * 3 + 2] = (majorRadius + r * Math.cos(phi)) * Math.sin(theta);
+    positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+    positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+    positions[i * 3 + 2] = radius * Math.cos(phi);
   }
   return positions;
 }
@@ -48,58 +44,50 @@ const vertexShader = /* glsl */ `
 
   attribute float aScale;
   attribute float aPhase;
+  attribute float aTwinkleSpeed;
+  attribute float aColorMix;
 
   varying float vAlpha;
-  varying float vDistFromCenter;
+  varying float vColorMix;
 
   void main() {
     vec3 pos = position;
 
-    // Pulso suave individual por partícula
-    float pulse = sin(uTime * 0.8 + aPhase) * 0.08;
-    pos *= 1.0 + pulse;
-
     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
 
-    // Repulsión del mouse en screen space
-    vec2 screenPos = (projectionMatrix * mvPosition).xy / (projectionMatrix * mvPosition).w;
-    float distToMouse = distance(screenPos, uMouse);
-    float repulsion = smoothstep(0.35, 0.0, distToMouse) * 0.4;
-    mvPosition.xy += normalize(screenPos - uMouse + 0.001) * repulsion;
-
-    // Tamaño basado en distancia y escala individual
-    float size = aScale * (3.0 + pulse * 2.0) * uPixelRatio;
+    // Tamaño variado — estrellas más grandes y más pequeñas
+    float size = aScale * 2.5 * uPixelRatio;
     gl_PointSize = size * (300.0 / -mvPosition.z);
     gl_Position = projectionMatrix * mvPosition;
 
-    // Alpha: más brillante cuando cerca del mouse
-    float brightness = smoothstep(0.4, 0.0, distToMouse) * 0.5;
-    vAlpha = 0.5 + brightness + pulse * 0.2;
-    vDistFromCenter = length(pos.xz) / 4.0;
+    // Twinkle: cada estrella parpadea a su propio ritmo
+    float twinkle = sin(uTime * aTwinkleSpeed + aPhase) * 0.5 + 0.5;
+    vAlpha = 0.3 + twinkle * 0.7;
+    vColorMix = aColorMix;
   }
 `;
 
 const fragmentShader = /* glsl */ `
   varying float vAlpha;
-  varying float vDistFromCenter;
+  varying float vColorMix;
 
   void main() {
-    // Punto circular suave con glow
+    // Punto circular suave
     float dist = length(gl_PointCoord - vec2(0.5));
     if (dist > 0.5) discard;
 
-    float alpha = smoothstep(0.5, 0.1, dist) * vAlpha;
-    // Color primario #00b4d8 = rgb(0, 180, 216) / 255
-    vec3 coreColor = vec3(0.0, 0.706, 0.847);
-    // Variación tonal sutil según distancia del centro
-    vec3 edgeColor = vec3(0.0, 0.55, 0.75);
-    vec3 color = mix(coreColor, edgeColor, vDistFromCenter);
+    float alpha = smoothstep(0.5, 0.05, dist) * vAlpha;
 
-    // Glow extra en el centro del punto
-    float glow = smoothstep(0.5, 0.0, dist) * 0.3;
+    // Mezcla entre blanco puro y azul-claro sutil
+    vec3 white = vec3(1.0, 1.0, 1.0);
+    vec3 lightBlue = vec3(0.7, 0.85, 1.0);
+    vec3 color = mix(white, lightBlue, vColorMix);
+
+    // Glow sutil en el centro
+    float glow = smoothstep(0.5, 0.0, dist) * 0.15;
     color += glow;
 
-    gl_FragColor = vec4(color, alpha * 0.85);
+    gl_FragColor = vec4(color, alpha * 0.9);
   }
 `;
 
@@ -133,13 +121,12 @@ export default function Canvas3D({ onProgress, onLoaded, onError }: Canvas3DProp
     scene.background = null;
 
     const camera = new THREE.PerspectiveCamera(
-      50,
+      60,
       window.innerWidth / window.innerHeight,
       0.1,
       100
     );
-    camera.position.set(0, 1, 7);
-    camera.lookAt(0, 0, 0);
+    camera.position.set(0, 0, 0);
 
     const pixelRatio = Math.min(window.devicePixelRatio, 2);
     renderer.setPixelRatio(pixelRatio);
@@ -147,20 +134,29 @@ export default function Canvas3D({ onProgress, onLoaded, onError }: Canvas3DProp
     renderer.domElement.style.touchAction = 'pan-y';
     container.appendChild(renderer.domElement);
 
-    // Partículas procedurales
-    const PARTICLE_COUNT = 1800;
-    const positions = generateTorusPositions(PARTICLE_COUNT);
-    const scales = new Float32Array(PARTICLE_COUNT);
-    const phases = new Float32Array(PARTICLE_COUNT);
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      scales[i] = 0.4 + Math.random() * 0.8;
+    // Estrellas
+    const STAR_COUNT = 2200;
+    const positions = generateStarPositions(STAR_COUNT);
+    const scales = new Float32Array(STAR_COUNT);
+    const phases = new Float32Array(STAR_COUNT);
+    const twinkleSpeeds = new Float32Array(STAR_COUNT);
+    const colorMixes = new Float32Array(STAR_COUNT);
+
+    for (let i = 0; i < STAR_COUNT; i++) {
+      // Mayoría pequeñas, algunas grandes (distribución exponencial)
+      scales[i] = 0.2 + Math.pow(Math.random(), 3) * 1.2;
       phases[i] = Math.random() * Math.PI * 2;
+      twinkleSpeeds[i] = 0.3 + Math.random() * 1.5;
+      // 70% blancas, 30% azuladas
+      colorMixes[i] = Math.random() < 0.7 ? Math.random() * 0.15 : 0.3 + Math.random() * 0.5;
     }
 
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute('aScale', new THREE.BufferAttribute(scales, 1));
     geometry.setAttribute('aPhase', new THREE.BufferAttribute(phases, 1));
+    geometry.setAttribute('aTwinkleSpeed', new THREE.BufferAttribute(twinkleSpeeds, 1));
+    geometry.setAttribute('aColorMix', new THREE.BufferAttribute(colorMixes, 1));
 
     const uniforms = {
       uTime: { value: 0 },
@@ -177,14 +173,15 @@ export default function Canvas3D({ onProgress, onLoaded, onError }: Canvas3DProp
       blending: THREE.AdditiveBlending,
     });
 
-    const particles = new THREE.Points(geometry, material);
-    scene.add(particles);
+    const stars = new THREE.Points(geometry, material);
+    scene.add(stars);
 
-    // Mouse tracking (normalizado a clip space -1..1)
+    // Mouse tracking para parallax sutil
     const mouse = new THREE.Vector2(0, 0);
+    const targetMouse = new THREE.Vector2(0, 0);
     const handleMouseMove = (e: MouseEvent) => {
-      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      targetMouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      targetMouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
     };
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
@@ -195,14 +192,13 @@ export default function Canvas3D({ onProgress, onLoaded, onError }: Canvas3DProp
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
 
-    // Escena lista instantáneamente (sin descarga)
+    // Escena lista instantáneamente
     callbacksRef.current.onProgress?.(100);
     requestAnimationFrame(() => {
       callbacksRef.current.onLoaded?.();
     });
 
     // Animation loop
-    let autoRotation = 0;
     let animationId: number | null = null;
     const clock = new THREE.Clock();
 
@@ -211,20 +207,17 @@ export default function Canvas3D({ onProgress, onLoaded, onError }: Canvas3DProp
 
       const elapsed = clock.getElapsedTime();
       uniforms.uTime.value = elapsed;
-      uniforms.uMouse.value.lerp(mouse, 0.05); // suavizado
 
-      if (prefersReducedMotion) {
-        particles.rotation.y = 0;
-      } else {
-        autoRotation += 0.0012;
-        particles.rotation.y = autoRotation + scrollY * 0.0004;
+      // Parallax suave del campo de estrellas con el mouse
+      mouse.lerp(targetMouse, 0.03);
 
-        // Camera sube ligeramente con scroll
-        const vh = window.innerHeight;
-        const t = Math.min(scrollY / (vh * 2), 1);
-        camera.position.y = 1 + t * 0.5;
+      if (!prefersReducedMotion) {
+        // Rotación muy lenta del campo estelar
+        stars.rotation.y = elapsed * 0.015 + mouse.x * 0.08;
+        stars.rotation.x = mouse.y * 0.05;
 
         // Fade tras el hero
+        const vh = window.innerHeight;
         const fadeStart = vh * 0.4;
         const fadeEnd = vh * 1.1;
         const f = Math.min(Math.max((scrollY - fadeStart) / (fadeEnd - fadeStart), 0), 1);
@@ -235,7 +228,7 @@ export default function Canvas3D({ onProgress, onLoaded, onError }: Canvas3DProp
     };
     animate();
 
-    // Visibility
+    // Visibility pause
     const handleVisibility = () => {
       if (document.hidden) {
         if (animationId !== null) {

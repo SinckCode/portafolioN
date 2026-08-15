@@ -45,6 +45,15 @@ export class UsersService {
     };
   }
 
+  async searchByName(query: string, limit = 20): Promise<Pick<UserDocument, '_id' | 'name'>[]> {
+    if (!query || query.length < 2) return [];
+    return this.userModel
+      .find({ name: { $regex: query, $options: 'i' } })
+      .select('_id name')
+      .limit(limit)
+      .exec();
+  }
+
   async findById(id: string): Promise<UserDocument> {
     const user = await this.userModel.findById(id).exec();
     if (!user) {
