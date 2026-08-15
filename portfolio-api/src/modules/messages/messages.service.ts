@@ -12,25 +12,32 @@ export class MessagesService {
     private messagesGateway: MessagesGateway,
   ) {}
 
-  async create(dto: CreateMessageDto, fromUserId: string): Promise<Message> {
+  async create(dto: CreateMessageDto, fromUserId: string) {
+    const fromOid = new Types.ObjectId(fromUserId);
+    const toOid = new Types.ObjectId(dto.to);
+
     const message = await this.messageModel.create({
-      from: fromUserId,
-      to: dto.to,
+      from: fromOid,
+      to: toOid,
       body: dto.body,
     });
 
-    // Populate from/to for the real-time event
+    // Populate from/to for the response and real-time event
     const populated = await this.messageModel
       .findById(message._id)
       .populate('from', 'name avatar')
-      .populate('to', 'name avatar');
+      .populate('to', 'name avatar')
+      .lean();
 
-    // Emit to recipient via WebSocket
-    this.messagesGateway.emitNewMessage(dto.to, populated);
-    // Emit back to sender (so other tabs/devices update)
-    this.messagesGateway.emitMessageSent(fromUserId, populated);
+    if (populated) {
+      // Emit via WebSocket (best-effort, don't block)
+      try {
+        this.messagesGateway.emitNewMessage(dto.to, populated);
+        this.messagesGateway.emitMessageSent(fromUserId, populated);
+      } catch { /* WebSocket may not be connected */ }
+    }
 
-    return populated!;
+    return populated || message;
   }
 
   // Lista de conversaciones: último mensaje con cada usuario
@@ -111,7 +118,8 @@ export class MessagesService {
       })
       .populate('from', 'name avatar')
       .populate('to', 'name avatar')
-      .sort({ createdAt: 1 });
+      .sort({ createdAt: 1 })
+      .lean();
   }
 
   // Admin: todas las conversaciones del sistema
@@ -183,7 +191,8 @@ export class MessagesService {
       })
       .populate('from', 'name avatar')
       .populate('to', 'name avatar')
-      .sort({ createdAt: 1 });
+      .sort({ createdAt: 1 })
+      .lean();
   }
 
   async getUnreadCount(userId: string): Promise<number> {

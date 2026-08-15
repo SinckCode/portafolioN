@@ -120,6 +120,18 @@ export default function MessagesPage() {
     return () => { socket.disconnect(); socketRef.current = null; };
   }, [accessToken, fetchConvos]);
 
+  // Polling fallback — in case WebSocket isn't connected
+  const pollRef = useRef<ReturnType<typeof setInterval>>(null);
+  useEffect(() => {
+    if (!activeChat || !accessToken) return;
+    // Poll every 10s as fallback
+    pollRef.current = setInterval(() => {
+      fetchChat(activeChat);
+      fetchConvos();
+    }, 10000);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, [activeChat, accessToken, fetchChat, fetchConvos]);
+
   // Open a conversation
   function openChat(userId: string, name: string) {
     setActiveChat(userId);
@@ -139,7 +151,7 @@ export default function MessagesPage() {
     fetchConvos();
   }
 
-  // Send message — uses API response directly, not WebSocket
+  // Send message — always refetch conversation after sending
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
     if (!newMsg.trim() || !activeChat || !accessToken) return;
@@ -147,18 +159,9 @@ export default function MessagesPage() {
     setSending(true);
     setNewMsg('');
     try {
-      const sent = await api.sendMessage({ to: activeChat, body }, accessToken) as ChatMessage;
-      // Add to messages immediately from API response
-      if (sent?._id) {
-        setMessages((prev) => {
-          if (prev.some((m) => m._id === sent._id)) return prev;
-          return [...prev, sent];
-        });
-        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
-      } else {
-        // Fallback: refetch the whole conversation
-        fetchChat(activeChat);
-      }
+      await api.sendMessage({ to: activeChat, body }, accessToken);
+      // Always refetch — this is the source of truth
+      fetchChat(activeChat);
       fetchConvos();
       inputRef.current?.focus();
     } catch { /* ignore */ }

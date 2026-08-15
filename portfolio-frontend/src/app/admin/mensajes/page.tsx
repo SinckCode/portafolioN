@@ -175,7 +175,7 @@ export default function AdminMensajes() {
       .finally(() => setLoadingChat(false));
   }
 
-  // Send message
+  // Send message — always refetch after sending
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
     if (!newMsg.trim() || !activeChat || !accessToken) return;
@@ -183,16 +183,8 @@ export default function AdminMensajes() {
     setSending(true);
     setNewMsg('');
     try {
-      const sent = await api.sendMessage({ to: activeChat, body }, accessToken) as ChatMessage;
-      if (sent?._id) {
-        setMessages((prev) => {
-          if (prev.some((m) => m._id === sent._id)) return prev;
-          return [...prev, sent];
-        });
-        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
-      } else {
-        fetchChat(activeChat);
-      }
+      await api.sendMessage({ to: activeChat, body }, accessToken);
+      fetchChat(activeChat);
       fetchMyConvos();
       fetchAllConvos();
       inputRef.current?.focus();
