@@ -2,12 +2,62 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 interface FetchOptions extends RequestInit {
   token?: string;
+  _retried?: boolean; // internal: prevents infinite refresh loops
+}
+
+// Listeners que se notifican cuando el token se refresca (para sincronizar AuthContext)
+type TokenListener = (accessToken: string) => void;
+const tokenListeners = new Set<TokenListener>();
+export function onTokenRefresh(listener: TokenListener) {
+  tokenListeners.add(listener);
+  return () => { tokenListeners.delete(listener); };
+}
+
+// Evitar múltiples refreshes simultáneos
+let refreshPromise: Promise<string> | null = null;
+
+async function tryRefreshToken(): Promise<string> {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    const refreshToken = typeof localStorage !== 'undefined'
+      ? localStorage.getItem('refreshToken')
+      : null;
+
+    if (!refreshToken) throw new Error('No refresh token');
+
+    const res = await fetch(`${API_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!res.ok) throw new Error('Refresh failed');
+
+    const json = await res.json();
+    const data = json.data !== undefined ? json.data : json;
+    const newAccessToken: string = data.accessToken;
+    const newRefreshToken: string | undefined = data.refreshToken;
+
+    localStorage.setItem('accessToken', newAccessToken);
+    if (newRefreshToken) localStorage.setItem('refreshToken', newRefreshToken);
+
+    // Notificar a AuthContext del nuevo token
+    tokenListeners.forEach((fn) => fn(newAccessToken));
+
+    return newAccessToken;
+  })();
+
+  try {
+    return await refreshPromise;
+  } finally {
+    refreshPromise = null;
+  }
 }
 
 async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
-  const { token, headers: customHeaders, ...rest } = options;
+  const { token, _retried, headers: customHeaders, ...rest } = options;
 
-  // Con FormData el navegador debe fijar su propio Content-Type (boundary)
   const isFormData = typeof FormData !== 'undefined' && rest.body instanceof FormData;
 
   const headers: Record<string, string> = {
@@ -21,13 +71,25 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
 
   const res = await fetch(`${API_URL}${endpoint}`, { headers, ...rest });
 
+  // Auto-refresh en 401: renovar token y reintentar UNA vez
+  if (res.status === 401 && token && !_retried) {
+    try {
+      const newToken = await tryRefreshToken();
+      return fetchApi<T>(endpoint, { ...options, token: newToken, _retried: true });
+    } catch {
+      // Refresh falló — limpiar sesión
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      throw new Error('Sesión expirada');
+    }
+  }
+
   if (!res.ok) {
     const error = await res.json().catch(() => ({ message: 'Error de red' }));
     throw new Error(error.message || `HTTP ${res.status}`);
   }
 
   const json = await res.json();
-  // El TransformInterceptor del backend envuelve todo en { data: ... }
   return json.data !== undefined ? json.data : json;
 }
 

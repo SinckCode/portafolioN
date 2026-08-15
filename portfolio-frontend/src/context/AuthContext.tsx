@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { api } from '@/lib/api';
+import { onTokenRefresh } from '@/lib/api';
 import type { User } from '@/types';
 
 interface AuthState {
@@ -52,6 +53,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setState(prev => ({ ...prev, isLoading: false }));
     }
   }, [loadUser]);
+
+  // Sincronizar cuando fetchApi auto-refresca el token
+  useEffect(() => {
+    return onTokenRefresh((newToken) => {
+      setState((prev) => prev.user ? { ...prev, accessToken: newToken } : prev);
+    });
+  }, []);
 
   const login = async (email: string, password: string) => {
     const res = await api.login(email, password);
