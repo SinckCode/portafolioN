@@ -3,17 +3,34 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Message } from './schemas/message.schema';
 import { CreateMessageDto } from './dto/create-message.dto';
+import { MessagesGateway } from './messages.gateway';
 
 @Injectable()
 export class MessagesService {
-  constructor(@InjectModel(Message.name) private messageModel: Model<Message>) {}
+  constructor(
+    @InjectModel(Message.name) private messageModel: Model<Message>,
+    private messagesGateway: MessagesGateway,
+  ) {}
 
   async create(dto: CreateMessageDto, fromUserId: string): Promise<Message> {
-    return this.messageModel.create({
+    const message = await this.messageModel.create({
       from: fromUserId,
       to: dto.to,
       body: dto.body,
     });
+
+    // Populate from/to for the real-time event
+    const populated = await this.messageModel
+      .findById(message._id)
+      .populate('from', 'name avatar')
+      .populate('to', 'name avatar');
+
+    // Emit to recipient via WebSocket
+    this.messagesGateway.emitNewMessage(dto.to, populated);
+    // Emit back to sender (so other tabs/devices update)
+    this.messagesGateway.emitMessageSent(fromUserId, populated);
+
+    return populated!;
   }
 
   // Lista de conversaciones: último mensaje con cada usuario
@@ -21,7 +38,6 @@ export class MessagesService {
     const uid = new Types.ObjectId(userId);
 
     const conversations = await this.messageModel.aggregate([
-      // Mensajes donde participo y no he borrado
       {
         $match: {
           $or: [
@@ -30,9 +46,7 @@ export class MessagesService {
           ],
         },
       },
-      // Ordenar por fecha desc
       { $sort: { createdAt: -1 } },
-      // Agrupar por el "otro" usuario
       {
         $group: {
           _id: {
@@ -50,7 +64,6 @@ export class MessagesService {
           },
         },
       },
-      // Traer info del otro usuario
       {
         $lookup: {
           from: 'users',
@@ -98,7 +111,79 @@ export class MessagesService {
       })
       .populate('from', 'name avatar')
       .populate('to', 'name avatar')
-      .sort({ createdAt: 1 }); // cronológico ascendente
+      .sort({ createdAt: 1 });
+  }
+
+  // Admin: todas las conversaciones del sistema
+  async getAllConversations() {
+    return this.messageModel.aggregate([
+      {
+        $match: {
+          deletedByFrom: { $ne: true },
+          deletedByTo: { $ne: true },
+        },
+      },
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: {
+            $cond: [
+              { $lt: ['$from', '$to'] },
+              { a: '$from', b: '$to' },
+              { a: '$to', b: '$from' },
+            ],
+          },
+          lastMessage: { $first: '$$ROOT' },
+          totalMessages: { $sum: 1 },
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id.a',
+          foreignField: '_id',
+          as: 'userA',
+        },
+      },
+      { $unwind: '$userA' },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id.b',
+          foreignField: '_id',
+          as: 'userB',
+        },
+      },
+      { $unwind: '$userB' },
+      {
+        $project: {
+          _id: 0,
+          userA: { _id: '$userA._id', name: '$userA.name' },
+          userB: { _id: '$userB._id', name: '$userB.name' },
+          lastMessageBody: '$lastMessage.body',
+          lastMessageAt: '$lastMessage.createdAt',
+          totalMessages: 1,
+        },
+      },
+      { $sort: { lastMessageAt: -1 } },
+    ]);
+  }
+
+  // Admin: ver conversación entre dos usuarios
+  async getConversationBetween(userAId: string, userBId: string) {
+    const a = new Types.ObjectId(userAId);
+    const b = new Types.ObjectId(userBId);
+
+    return this.messageModel
+      .find({
+        $or: [
+          { from: a, to: b },
+          { from: b, to: a },
+        ],
+      })
+      .populate('from', 'name avatar')
+      .populate('to', 'name avatar')
+      .sort({ createdAt: 1 });
   }
 
   async getUnreadCount(userId: string): Promise<number> {
@@ -127,5 +212,12 @@ export class MessagesService {
     } else {
       await message.save();
     }
+  }
+
+  // Admin: eliminar mensaje definitivamente
+  async adminRemove(id: string): Promise<void> {
+    const message = await this.messageModel.findById(id);
+    if (!message) throw new NotFoundException('Mensaje no encontrado');
+    await this.messageModel.findByIdAndDelete(id);
   }
 }

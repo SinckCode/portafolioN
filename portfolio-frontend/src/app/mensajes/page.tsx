@@ -3,9 +3,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { api } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { io, Socket } from 'socket.io-client';
+
+const WS_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace(/\/api$/, '');
 
 interface Conversation {
   recipientId: string;
@@ -50,7 +52,13 @@ export default function MessagesPage() {
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval>>(null);
+  const socketRef = useRef<Socket | null>(null);
+  const activeChatRef = useRef<string | null>(null);
+
+  // Keep ref in sync for socket handler
+  useEffect(() => {
+    activeChatRef.current = activeChat;
+  }, [activeChat]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -70,16 +78,52 @@ export default function MessagesPage() {
 
   useEffect(() => { fetchConvos(); }, [fetchConvos]);
 
-  // Fetch chat messages
-  const fetchChat = useCallback((userId: string) => {
+  // Socket.IO connection
+  useEffect(() => {
     if (!accessToken) return;
-    api.getConversation(userId, accessToken)
-      .then((data) => {
-        setMessages((data as ChatMessage[]) || []);
-        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-      })
-      .catch(() => {});
-  }, [accessToken]);
+
+    const socket = io(`${WS_URL}/messages`, {
+      auth: { token: accessToken },
+      transports: ['websocket', 'polling'],
+    });
+
+    socketRef.current = socket;
+
+    // Received a new message from someone
+    socket.on('newMessage', (msg: ChatMessage) => {
+      const fromId = msg.from._id;
+      // If this message is from the user we're chatting with, add it
+      if (activeChatRef.current === fromId) {
+        setMessages((prev) => {
+          if (prev.some((m) => m._id === msg._id)) return prev;
+          return [...prev, msg];
+        });
+        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+        // Mark as read
+        api.getConversation(fromId, accessToken).catch(() => {});
+      }
+      // Always refresh conversation list
+      fetchConvos();
+    });
+
+    // Our own message was sent (confirmation from server)
+    socket.on('messageSent', (msg: ChatMessage) => {
+      const toId = msg.to._id;
+      if (activeChatRef.current === toId) {
+        setMessages((prev) => {
+          if (prev.some((m) => m._id === msg._id)) return prev;
+          return [...prev, msg];
+        });
+        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+      }
+      fetchConvos();
+    });
+
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [accessToken, fetchConvos]);
 
   // Open a conversation
   function openChat(userId: string, name: string) {
@@ -97,18 +141,8 @@ export default function MessagesPage() {
       .catch(() => {})
       .finally(() => setLoadingChat(false));
 
-    // Poll for new messages every 5s
-    if (pollRef.current) clearInterval(pollRef.current);
-    pollRef.current = setInterval(() => fetchChat(userId), 5000);
-
-    // Refresh conversation list
     fetchConvos();
   }
-
-  // Cleanup polling
-  useEffect(() => {
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, []);
 
   // Send message
   async function handleSend(e: React.FormEvent) {
@@ -118,9 +152,8 @@ export default function MessagesPage() {
     try {
       await api.sendMessage({ to: activeChat, body: newMsg.trim() }, accessToken);
       setNewMsg('');
-      fetchChat(activeChat);
-      fetchConvos();
       inputRef.current?.focus();
+      // The socket 'messageSent' event will add the message to the UI
     } catch { /* ignore */ }
     setSending(false);
   }
@@ -147,7 +180,6 @@ export default function MessagesPage() {
         <main className="min-h-screen pt-24 pb-20 flex items-center justify-center">
           <p className="text-on-surface-variant">Cargando...</p>
         </main>
-        <Footer />
       </>
     );
   }
@@ -273,7 +305,6 @@ export default function MessagesPage() {
               style={{ background: 'rgba(10,12,16,0.6)' }}
             >
               {!activeChat ? (
-                /* Empty state */
                 <div className="flex-1 flex flex-col items-center justify-center gap-3 text-on-surface-variant">
                   <svg className="w-20 h-20 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -285,7 +316,7 @@ export default function MessagesPage() {
                   {/* Chat header */}
                   <div className="px-4 py-3 flex items-center gap-3" style={{ borderBottom: '1px solid var(--color-outline-variant)' }}>
                     <button
-                      onClick={() => { setActiveChat(null); if (pollRef.current) clearInterval(pollRef.current); }}
+                      onClick={() => setActiveChat(null)}
                       className="md:hidden text-on-surface-variant hover:text-on-surface"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

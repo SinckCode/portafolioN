@@ -302,6 +302,16 @@ export const api = {
   deleteMessage: (id: string, token: string) =>
     fetchApi(`/messages/${id}`, { method: 'DELETE', token }),
 
+  // Messages (admin)
+  getAdminConversations: (token: string) =>
+    fetchApi('/messages/admin/all', { token }),
+
+  getAdminConversation: (userA: string, userB: string, token: string) =>
+    fetchApi(`/messages/admin/conversation/${userA}/${userB}`, { token }),
+
+  adminDeleteMessage: (id: string, token: string) =>
+    fetchApi(`/messages/admin/${id}`, { method: 'DELETE', token }),
+
   // AI Generation (admin)
   generateBlogPost: (data: { topic: string; style?: string; language?: string; targetKeywords?: string[] }, token: string) =>
     fetchApi('/generation/blog', { method: 'POST', body: JSON.stringify(data), token }),

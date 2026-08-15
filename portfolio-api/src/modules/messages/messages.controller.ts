@@ -3,7 +3,9 @@ import { ApiTags } from '@nestjs/swagger';
 import { MessagesService } from './messages.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 
 @ApiTags('messages')
 @Controller('messages')
@@ -30,6 +32,31 @@ export class MessagesController {
   async getUnreadCount(@CurrentUser() user: any) {
     const count = await this.messagesService.getUnreadCount(String(user._id));
     return { count };
+  }
+
+  // Admin endpoints
+  @Get('admin/all')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  getAllConversations() {
+    return this.messagesService.getAllConversations();
+  }
+
+  @Get('admin/conversation/:userA/:userB')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  getConversationBetween(
+    @Param('userA') userA: string,
+    @Param('userB') userB: string,
+  ) {
+    return this.messagesService.getConversationBetween(userA, userB);
+  }
+
+  @Delete('admin/:id')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  adminRemove(@Param('id') id: string) {
+    return this.messagesService.adminRemove(id);
   }
 
   @Delete(':id')
