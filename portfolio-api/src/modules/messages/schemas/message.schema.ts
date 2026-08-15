@@ -10,9 +10,6 @@ export class Message extends Document {
   to: Types.ObjectId;
 
   @Prop({ required: true, trim: true })
-  subject: string;
-
-  @Prop({ required: true, trim: true })
   body: string;
 
   @Prop({ default: false })
@@ -30,6 +27,6 @@ export class Message extends Document {
 
 export const MessageSchema = SchemaFactory.createForClass(Message);
 
+MessageSchema.index({ from: 1, to: 1, createdAt: -1 });
 MessageSchema.index({ to: 1, read: 1 });
-MessageSchema.index({ from: 1 });
 MessageSchema.index({ createdAt: -1 });

@@ -16,25 +16,20 @@ export class MessagesController {
     return this.messagesService.create(dto, String(user._id));
   }
 
-  @Get('inbox')
-  getInbox(@CurrentUser() user: any) {
-    return this.messagesService.getInbox(String(user._id));
+  @Get('conversations')
+  getConversations(@CurrentUser() user: any) {
+    return this.messagesService.getConversations(String(user._id));
   }
 
-  @Get('sent')
-  getSent(@CurrentUser() user: any) {
-    return this.messagesService.getSent(String(user._id));
+  @Get('conversation/:userId')
+  getConversation(@Param('userId') otherUserId: string, @CurrentUser() user: any) {
+    return this.messagesService.getConversation(String(user._id), otherUserId);
   }
 
   @Get('unread-count')
   async getUnreadCount(@CurrentUser() user: any) {
     const count = await this.messagesService.getUnreadCount(String(user._id));
     return { count };
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string, @CurrentUser() user: any) {
-    return this.messagesService.findOne(id, String(user._id));
   }
 
   @Delete(':id')

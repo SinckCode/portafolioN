@@ -10,10 +10,5 @@ export class CreateMessageDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  subject!: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
   body!: string;
 }

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Message } from './schemas/message.schema';
 import { CreateMessageDto } from './dto/create-message.dto';
 
@@ -12,50 +12,101 @@ export class MessagesService {
     return this.messageModel.create({
       from: fromUserId,
       to: dto.to,
-      subject: dto.subject,
       body: dto.body,
     });
   }
 
-  async getInbox(userId: string) {
-    return this.messageModel
-      .find({ to: userId, deletedByTo: false })
-      .populate('from', 'name avatar email')
-      .sort({ createdAt: -1 });
+  // Lista de conversaciones: último mensaje con cada usuario
+  async getConversations(userId: string) {
+    const uid = new Types.ObjectId(userId);
+
+    const conversations = await this.messageModel.aggregate([
+      // Mensajes donde participo y no he borrado
+      {
+        $match: {
+          $or: [
+            { from: uid, deletedByFrom: { $ne: true } },
+            { to: uid, deletedByTo: { $ne: true } },
+          ],
+        },
+      },
+      // Ordenar por fecha desc
+      { $sort: { createdAt: -1 } },
+      // Agrupar por el "otro" usuario
+      {
+        $group: {
+          _id: {
+            $cond: [{ $eq: ['$from', uid] }, '$to', '$from'],
+          },
+          lastMessage: { $first: '$$ROOT' },
+          unread: {
+            $sum: {
+              $cond: [
+                { $and: [{ $eq: ['$to', uid] }, { $eq: ['$read', false] }] },
+                1,
+                0,
+              ],
+            },
+          },
+        },
+      },
+      // Traer info del otro usuario
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'otherUser',
+        },
+      },
+      { $unwind: '$otherUser' },
+      {
+        $project: {
+          _id: 0,
+          recipientId: '$otherUser._id',
+          recipientName: '$otherUser.name',
+          recipientAvatar: '$otherUser.avatar',
+          lastMessageBody: '$lastMessage.body',
+          lastMessageAt: '$lastMessage.createdAt',
+          lastMessageFromMe: { $eq: ['$lastMessage.from', uid] },
+          unread: 1,
+        },
+      },
+      { $sort: { lastMessageAt: -1 } },
+    ]);
+
+    return conversations;
   }
 
-  async getSent(userId: string) {
+  // Mensajes de una conversación con un usuario específico
+  async getConversation(userId: string, otherUserId: string) {
+    const uid = new Types.ObjectId(userId);
+    const otherId = new Types.ObjectId(otherUserId);
+
+    // Marcar como leídos los mensajes que me enviaron
+    await this.messageModel.updateMany(
+      { from: otherId, to: uid, read: false },
+      { $set: { read: true, readAt: new Date() } },
+    );
+
     return this.messageModel
-      .find({ from: userId, deletedByFrom: false })
-      .populate('to', 'name avatar email')
-      .sort({ createdAt: -1 });
+      .find({
+        $or: [
+          { from: uid, to: otherId, deletedByFrom: { $ne: true } },
+          { from: otherId, to: uid, deletedByTo: { $ne: true } },
+        ],
+      })
+      .populate('from', 'name avatar')
+      .populate('to', 'name avatar')
+      .sort({ createdAt: 1 }); // cronológico ascendente
   }
 
   async getUnreadCount(userId: string): Promise<number> {
-    return this.messageModel.countDocuments({ to: userId, read: false, deletedByTo: false });
-  }
-
-  async findOne(id: string, userId: string): Promise<Message> {
-    const message = await this.messageModel
-      .findById(id)
-      .populate('from', 'name avatar email')
-      .populate('to', 'name avatar email');
-    if (!message) throw new NotFoundException('Mensaje no encontrado');
-
-    const isFrom = message.from._id?.toString() === userId || (message.from as any)?.toString() === userId;
-    const isTo = message.to._id?.toString() === userId || (message.to as any)?.toString() === userId;
-    if (!isFrom && !isTo) {
-      throw new ForbiddenException('No tienes acceso a este mensaje');
-    }
-
-    // Mark as read if recipient opens it
-    if (isTo && !message.read) {
-      message.read = true;
-      message.readAt = new Date();
-      await message.save();
-    }
-
-    return message;
+    return this.messageModel.countDocuments({
+      to: new Types.ObjectId(userId),
+      read: false,
+      deletedByTo: { $ne: true },
+    });
   }
 
   async remove(id: string, userId: string): Promise<void> {
@@ -68,11 +119,9 @@ export class MessagesService {
       throw new ForbiddenException('No tienes acceso a este mensaje');
     }
 
-    // Soft delete: mark as deleted for the user
     if (isFrom) message.deletedByFrom = true;
     if (isTo) message.deletedByTo = true;
 
-    // If both deleted, remove from DB
     if (message.deletedByFrom && message.deletedByTo) {
       await this.messageModel.findByIdAndDelete(id);
     } else {

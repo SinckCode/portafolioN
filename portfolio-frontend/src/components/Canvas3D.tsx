@@ -21,15 +21,13 @@ const isWebGLAvailable = () => {
   }
 };
 
-// Genera posiciones aleatorias en una esfera grande (cielo estrellado)
+// Distribuye puntos uniformemente en una esfera grande
 function generateStarPositions(count: number): Float32Array {
   const positions = new Float32Array(count * 3);
   for (let i = 0; i < count; i++) {
-    // Distribución uniforme en esfera con radio entre 8 y 25
-    const radius = 8 + Math.random() * 17;
+    const radius = 10 + Math.random() * 30;
     const theta = Math.random() * Math.PI * 2;
     const phi = Math.acos(2 * Math.random() - 1);
-
     positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
     positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
     positions[i * 3 + 2] = radius * Math.cos(phi);
@@ -39,55 +37,43 @@ function generateStarPositions(count: number): Float32Array {
 
 const vertexShader = /* glsl */ `
   uniform float uTime;
-  uniform vec2 uMouse;
   uniform float uPixelRatio;
 
   attribute float aScale;
   attribute float aPhase;
   attribute float aTwinkleSpeed;
-  attribute float aColorMix;
 
   varying float vAlpha;
-  varying float vColorMix;
 
   void main() {
-    vec3 pos = position;
+    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
 
-    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-
-    // Tamaño variado — estrellas más grandes y más pequeñas
-    float size = aScale * 2.5 * uPixelRatio;
-    gl_PointSize = size * (300.0 / -mvPosition.z);
+    // Puntos diminutos — como pixeles de estrellas
+    float size = aScale * 1.0 * uPixelRatio;
+    gl_PointSize = size * (200.0 / -mvPosition.z);
     gl_Position = projectionMatrix * mvPosition;
 
-    // Twinkle: cada estrella parpadea a su propio ritmo
+    // Twinkle muy sutil
     float twinkle = sin(uTime * aTwinkleSpeed + aPhase) * 0.5 + 0.5;
-    vAlpha = 0.3 + twinkle * 0.7;
-    vColorMix = aColorMix;
+    vAlpha = 0.15 + twinkle * 0.45;
   }
 `;
 
 const fragmentShader = /* glsl */ `
   varying float vAlpha;
-  varying float vColorMix;
 
   void main() {
-    // Punto circular suave
     float dist = length(gl_PointCoord - vec2(0.5));
     if (dist > 0.5) discard;
 
-    float alpha = smoothstep(0.5, 0.05, dist) * vAlpha;
+    // Punto nítido, sin glow exagerado
+    float alpha = smoothstep(0.5, 0.15, dist) * vAlpha;
 
-    // Mezcla entre blanco puro y azul-claro sutil
-    vec3 white = vec3(1.0, 1.0, 1.0);
-    vec3 lightBlue = vec3(0.7, 0.85, 1.0);
-    vec3 color = mix(white, lightBlue, vColorMix);
+    // Color: gris-azulado muy tenue, como el color de la página
+    // El fondo del sitio es ~#0f1115, las estrellas son un gris claro sutil
+    vec3 color = vec3(0.55, 0.58, 0.65);
 
-    // Glow sutil en el centro
-    float glow = smoothstep(0.5, 0.0, dist) * 0.15;
-    color += glow;
-
-    gl_FragColor = vec4(color, alpha * 0.9);
+    gl_FragColor = vec4(color, alpha * 0.7);
   }
 `;
 
@@ -107,7 +93,7 @@ export default function Canvas3D({ onProgress, onLoaded, onError }: Canvas3DProp
 
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
     } catch (err) {
       callbacksRef.current.onError?.(err);
       return undefined;
@@ -134,21 +120,18 @@ export default function Canvas3D({ onProgress, onLoaded, onError }: Canvas3DProp
     renderer.domElement.style.touchAction = 'pan-y';
     container.appendChild(renderer.domElement);
 
-    // Estrellas
-    const STAR_COUNT = 2200;
+    // Muchas estrellas tiny
+    const STAR_COUNT = 3000;
     const positions = generateStarPositions(STAR_COUNT);
     const scales = new Float32Array(STAR_COUNT);
     const phases = new Float32Array(STAR_COUNT);
     const twinkleSpeeds = new Float32Array(STAR_COUNT);
-    const colorMixes = new Float32Array(STAR_COUNT);
 
     for (let i = 0; i < STAR_COUNT; i++) {
-      // Mayoría pequeñas, algunas grandes (distribución exponencial)
-      scales[i] = 0.2 + Math.pow(Math.random(), 3) * 1.2;
+      // Todas muy pequeñas, alguna ligeramente más grande
+      scales[i] = 0.3 + Math.pow(Math.random(), 5) * 0.7;
       phases[i] = Math.random() * Math.PI * 2;
-      twinkleSpeeds[i] = 0.3 + Math.random() * 1.5;
-      // 70% blancas, 30% azuladas
-      colorMixes[i] = Math.random() < 0.7 ? Math.random() * 0.15 : 0.3 + Math.random() * 0.5;
+      twinkleSpeeds[i] = 0.2 + Math.random() * 0.8;
     }
 
     const geometry = new THREE.BufferGeometry();
@@ -156,11 +139,9 @@ export default function Canvas3D({ onProgress, onLoaded, onError }: Canvas3DProp
     geometry.setAttribute('aScale', new THREE.BufferAttribute(scales, 1));
     geometry.setAttribute('aPhase', new THREE.BufferAttribute(phases, 1));
     geometry.setAttribute('aTwinkleSpeed', new THREE.BufferAttribute(twinkleSpeeds, 1));
-    geometry.setAttribute('aColorMix', new THREE.BufferAttribute(colorMixes, 1));
 
     const uniforms = {
       uTime: { value: 0 },
-      uMouse: { value: new THREE.Vector2(0, 0) },
       uPixelRatio: { value: pixelRatio },
     };
 
@@ -170,13 +151,12 @@ export default function Canvas3D({ onProgress, onLoaded, onError }: Canvas3DProp
       uniforms,
       transparent: true,
       depthWrite: false,
-      blending: THREE.AdditiveBlending,
     });
 
     const stars = new THREE.Points(geometry, material);
     scene.add(stars);
 
-    // Mouse tracking para parallax sutil
+    // Mouse parallax
     const mouse = new THREE.Vector2(0, 0);
     const targetMouse = new THREE.Vector2(0, 0);
     const handleMouseMove = (e: MouseEvent) => {
@@ -185,64 +165,47 @@ export default function Canvas3D({ onProgress, onLoaded, onError }: Canvas3DProp
     };
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
-    // Scroll tracking
     let scrollY = window.scrollY;
-    const handleScroll = () => {
-      scrollY = window.scrollY;
-    };
+    const handleScroll = () => { scrollY = window.scrollY; };
     window.addEventListener('scroll', handleScroll, { passive: true });
 
-    // Escena lista instantáneamente
     callbacksRef.current.onProgress?.(100);
     requestAnimationFrame(() => {
       callbacksRef.current.onLoaded?.();
     });
 
-    // Animation loop
     let animationId: number | null = null;
     const clock = new THREE.Clock();
 
     const animate = () => {
       animationId = requestAnimationFrame(animate);
-
-      const elapsed = clock.getElapsedTime();
-      uniforms.uTime.value = elapsed;
-
-      // Parallax suave del campo de estrellas con el mouse
-      mouse.lerp(targetMouse, 0.03);
+      uniforms.uTime.value = clock.getElapsedTime();
+      mouse.lerp(targetMouse, 0.02);
 
       if (!prefersReducedMotion) {
-        // Rotación muy lenta del campo estelar
-        stars.rotation.y = elapsed * 0.015 + mouse.x * 0.08;
-        stars.rotation.x = mouse.y * 0.05;
+        // Movimiento muy lento, casi imperceptible
+        stars.rotation.y = clock.getElapsedTime() * 0.005 + mouse.x * 0.03;
+        stars.rotation.x = mouse.y * 0.02;
 
-        // Fade tras el hero
+        // Fade al hacer scroll
         const vh = window.innerHeight;
-        const fadeStart = vh * 0.4;
-        const fadeEnd = vh * 1.1;
+        const fadeStart = vh * 0.5;
+        const fadeEnd = vh * 1.2;
         const f = Math.min(Math.max((scrollY - fadeStart) / (fadeEnd - fadeStart), 0), 1);
-        renderer.domElement.style.opacity = String(1 - f * 0.65);
+        renderer.domElement.style.opacity = String(1 - f * 0.7);
       }
 
       renderer.render(scene, camera);
     };
     animate();
 
-    // Visibility pause
     const handleVisibility = () => {
       if (document.hidden) {
-        if (animationId !== null) {
-          cancelAnimationFrame(animationId);
-          animationId = null;
-        }
-      } else if (animationId === null) {
-        clock.start();
-        animate();
-      }
+        if (animationId !== null) { cancelAnimationFrame(animationId); animationId = null; }
+      } else if (animationId === null) { clock.start(); animate(); }
     };
     document.addEventListener('visibilitychange', handleVisibility);
 
-    // Resize
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -259,9 +222,7 @@ export default function Canvas3D({ onProgress, onLoaded, onError }: Canvas3DProp
       geometry.dispose();
       material.dispose();
       renderer.dispose();
-      if (container.contains(renderer.domElement)) {
-        container.removeChild(renderer.domElement);
-      }
+      if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
     };
   }, []);
 

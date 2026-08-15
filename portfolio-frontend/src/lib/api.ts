@@ -287,18 +287,17 @@ export const api = {
   deleteFile: (filename: string, token: string) =>
     fetchApi(`/upload/${filename}`, { method: 'DELETE', token }),
 
-  // Messages
-  sendMessage: (data: { to: string; subject: string; body: string }, token: string) =>
+  // Messages (chat)
+  sendMessage: (data: { to: string; body: string }, token: string) =>
     fetchApi('/messages', { method: 'POST', body: JSON.stringify(data), token }),
 
-  getInbox: (token: string) => fetchApi('/messages/inbox', { token }),
+  getConversations: (token: string) => fetchApi('/messages/conversations', { token }),
 
-  getSent: (token: string) => fetchApi('/messages/sent', { token }),
+  getConversation: (userId: string, token: string) =>
+    fetchApi(`/messages/conversation/${userId}`, { token }),
 
   getUnreadCount: (token: string) =>
     fetchApi<{ count: number }>('/messages/unread-count', { token }),
-
-  getMessage: (id: string, token: string) => fetchApi(`/messages/${id}`, { token }),
 
   deleteMessage: (id: string, token: string) =>
     fetchApi(`/messages/${id}`, { method: 'DELETE', token }),
