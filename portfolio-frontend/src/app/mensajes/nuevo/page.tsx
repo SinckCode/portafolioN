@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { Suspense, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
@@ -14,6 +14,14 @@ interface UserOption {
 }
 
 export default function NewMessagePage() {
+  return (
+    <Suspense>
+      <NewMessageForm />
+    </Suspense>
+  );
+}
+
+function NewMessageForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, accessToken, isLoading } = useAuth();
