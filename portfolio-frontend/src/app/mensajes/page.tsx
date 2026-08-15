@@ -52,6 +52,7 @@ export default function MessagesPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const activeChatRef = useRef<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval>>(null);
+  const sendingRef = useRef(false);
 
   useEffect(() => { activeChatRef.current = activeChat; }, [activeChat]);
 
@@ -71,23 +72,33 @@ export default function MessagesPage() {
 
   useEffect(() => { fetchConvos(); }, [fetchConvos]);
 
-  const fetchChat = useCallback((userId: string) => {
+  const fetchChat = useCallback((userId: string, hard = false) => {
     if (!accessToken) return;
     api.getConversation(userId, accessToken)
       .then((data) => {
-        const msgs = (data as ChatMessage[]) || [];
-        setMessages(msgs);
-        if (msgs.length > 0) {
+        const serverMsgs = (data as ChatMessage[]) || [];
+        if (hard) {
+          setMessages(serverMsgs);
+        } else {
+          // Merge: keep optimistic (temp-*) messages that aren't in server data yet
+          setMessages((prev) => {
+            const serverIds = new Set(serverMsgs.map((m) => m._id));
+            const optimistic = prev.filter((m) => m._id.startsWith('temp-') && !serverIds.has(m._id));
+            return [...serverMsgs, ...optimistic];
+          });
+        }
+        if (serverMsgs.length > 0) {
           setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 80);
         }
       })
       .catch(() => {});
   }, [accessToken]);
 
-  // --- Polling: primary real-time mechanism (3s) ---
+  // --- Polling: primary real-time mechanism (3s), skips while sending ---
   useEffect(() => {
     if (!activeChat || !accessToken) return;
     pollRef.current = setInterval(() => {
+      if (sendingRef.current) return;
       fetchChat(activeChat);
       fetchConvos();
     }, 3000);
@@ -104,9 +115,8 @@ export default function MessagesPage() {
       reconnectionDelay: 3000,
     });
 
-    const addMsg = (msg: ChatMessage, matchField: 'from' | 'to') => {
-      const matchId = msg[matchField]?._id;
-      if (activeChatRef.current === matchId) {
+    socket.on('newMessage', (msg: ChatMessage) => {
+      if (activeChatRef.current === msg.from?._id) {
         setMessages((prev) => {
           if (prev.some((m) => m._id === msg._id)) return prev;
           return [...prev, msg];
@@ -114,10 +124,20 @@ export default function MessagesPage() {
         setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
       }
       fetchConvos();
-    };
+    });
 
-    socket.on('newMessage', (msg: ChatMessage) => addMsg(msg, 'from'));
-    socket.on('messageSent', (msg: ChatMessage) => addMsg(msg, 'to'));
+    socket.on('messageSent', (msg: ChatMessage) => {
+      if (activeChatRef.current === msg.to?._id) {
+        setMessages((prev) => {
+          if (prev.some((m) => m._id === msg._id)) return prev;
+          // Remove optimistic temp messages with same body to avoid dupes
+          const cleaned = prev.filter((m) => !(m._id.startsWith('temp-') && m.body === msg.body));
+          return [...cleaned, msg];
+        });
+        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+      }
+      fetchConvos();
+    });
 
     return () => { socket.disconnect(); };
   }, [accessToken, fetchConvos]);
@@ -146,9 +166,9 @@ export default function MessagesPage() {
     if (!newMsg.trim() || !activeChat || !accessToken || !user) return;
     const body = newMsg.trim();
     setSending(true);
+    sendingRef.current = true;
     setNewMsg('');
 
-    // Optimistic: show message instantly before server responds
     const optimisticId = `temp-${Date.now()}`;
     const optimisticMsg: ChatMessage = {
       _id: optimisticId,
@@ -162,11 +182,12 @@ export default function MessagesPage() {
 
     try {
       await api.sendMessage({ to: activeChat, body }, accessToken);
-      // Replace optimistic message with real data from server
+      // After server confirms, fetch real data (merge keeps optimistic until server catches up)
+      sendingRef.current = false;
       fetchChat(activeChat);
       fetchConvos();
     } catch {
-      // Remove optimistic message on failure
+      sendingRef.current = false;
       setMessages((prev) => prev.filter((m) => m._id !== optimisticId));
     }
     setSending(false);

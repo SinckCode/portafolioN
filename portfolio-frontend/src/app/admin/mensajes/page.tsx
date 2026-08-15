@@ -70,6 +70,7 @@ export default function AdminMensajes() {
   const socketRef = useRef<Socket | null>(null);
   const activeChatRef = useRef<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval>>(null);
+  const sendingRef = useRef(false);
 
   useEffect(() => { activeChatRef.current = activeChat; }, [activeChat]);
 
@@ -97,16 +98,24 @@ export default function AdminMensajes() {
     if (!accessToken) return;
     api.getConversation(userId, accessToken)
       .then((data) => {
-        setMessages((data as ChatMessage[]) || []);
-        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+        const serverMsgs = (data as ChatMessage[]) || [];
+        setMessages((prev) => {
+          const serverIds = new Set(serverMsgs.map((m) => m._id));
+          const optimistic = prev.filter((m) => m._id.startsWith('temp-') && !serverIds.has(m._id));
+          return [...serverMsgs, ...optimistic];
+        });
+        if (serverMsgs.length > 0) {
+          setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+        }
       })
       .catch(() => {});
   }, [accessToken]);
 
-  // Polling: primary real-time mechanism (3s)
+  // Polling: primary real-time mechanism (3s), skips while sending
   useEffect(() => {
     if (!activeChat || !accessToken) return;
     pollRef.current = setInterval(() => {
+      if (sendingRef.current) return;
       fetchChat(activeChat);
       fetchMyConvos();
       fetchAllConvos();
@@ -125,7 +134,7 @@ export default function AdminMensajes() {
     socketRef.current = socket;
 
     socket.on('newMessage', (msg: ChatMessage) => {
-      if (activeChatRef.current === msg.from._id) {
+      if (activeChatRef.current === msg.from?._id) {
         setMessages((prev) => {
           if (prev.some((m) => m._id === msg._id)) return prev;
           return [...prev, msg];
@@ -137,10 +146,11 @@ export default function AdminMensajes() {
     });
 
     socket.on('messageSent', (msg: ChatMessage) => {
-      if (activeChatRef.current === msg.to._id) {
+      if (activeChatRef.current === msg.to?._id) {
         setMessages((prev) => {
           if (prev.some((m) => m._id === msg._id)) return prev;
-          return [...prev, msg];
+          const cleaned = prev.filter((m) => !(m._id.startsWith('temp-') && m.body === msg.body));
+          return [...cleaned, msg];
         });
         setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
       }
@@ -193,6 +203,7 @@ export default function AdminMensajes() {
     if (!newMsg.trim() || !activeChat || !accessToken || !user) return;
     const body = newMsg.trim();
     setSending(true);
+    sendingRef.current = true;
     setNewMsg('');
 
     const optimisticId = `temp-${Date.now()}`;
@@ -208,10 +219,12 @@ export default function AdminMensajes() {
 
     try {
       await api.sendMessage({ to: activeChat, body }, accessToken);
+      sendingRef.current = false;
       fetchChat(activeChat);
       fetchMyConvos();
       fetchAllConvos();
     } catch {
+      sendingRef.current = false;
       setMessages((prev) => prev.filter((m) => m._id !== optimisticId));
     }
     setSending(false);
