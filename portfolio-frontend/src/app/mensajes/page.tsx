@@ -44,25 +44,23 @@ export default function MessagesPage() {
   const [loadingConvos, setLoadingConvos] = useState(true);
   const [loadingChat, setLoadingChat] = useState(false);
 
-  // Search users to start chat
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserOption[]>([]);
   const searchTimeout = useRef<ReturnType<typeof setTimeout>>(null);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const socketRef = useRef<Socket | null>(null);
   const activeChatRef = useRef<string | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval>>(null);
 
   useEffect(() => { activeChatRef.current = activeChat; }, [activeChat]);
 
   useEffect(() => {
     if (isLoading) return;
-    if (!user || !accessToken) {
-      router.push('/login?returnUrl=/mensajes');
-    }
+    if (!user || !accessToken) router.push('/login?returnUrl=/mensajes');
   }, [user, accessToken, isLoading, router]);
 
+  // --- Data fetching ---
   const fetchConvos = useCallback(() => {
     if (!accessToken) return;
     api.getConversations(accessToken)
@@ -77,26 +75,38 @@ export default function MessagesPage() {
     if (!accessToken) return;
     api.getConversation(userId, accessToken)
       .then((data) => {
-        setMessages((data as ChatMessage[]) || []);
-        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+        const msgs = (data as ChatMessage[]) || [];
+        setMessages(msgs);
+        if (msgs.length > 0) {
+          setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 80);
+        }
       })
       .catch(() => {});
   }, [accessToken]);
 
-  // Socket.IO — bonus real-time, NOT the only way messages appear
+  // --- Polling: primary real-time mechanism (3s) ---
+  useEffect(() => {
+    if (!activeChat || !accessToken) return;
+    pollRef.current = setInterval(() => {
+      fetchChat(activeChat);
+      fetchConvos();
+    }, 3000);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, [activeChat, accessToken, fetchChat, fetchConvos]);
+
+  // --- WebSocket: bonus instant delivery ---
   useEffect(() => {
     if (!accessToken) return;
-
     const socket = io(`${WS_URL}/messages`, {
       auth: { token: accessToken },
       transports: ['websocket', 'polling'],
       reconnection: true,
-      reconnectionDelay: 2000,
+      reconnectionDelay: 3000,
     });
-    socketRef.current = socket;
 
-    socket.on('newMessage', (msg: ChatMessage) => {
-      if (activeChatRef.current === msg.from._id) {
+    const addMsg = (msg: ChatMessage, matchField: 'from' | 'to') => {
+      const matchId = msg[matchField]?._id;
+      if (activeChatRef.current === matchId) {
         setMessages((prev) => {
           if (prev.some((m) => m._id === msg._id)) return prev;
           return [...prev, msg];
@@ -104,35 +114,15 @@ export default function MessagesPage() {
         setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
       }
       fetchConvos();
-    });
+    };
 
-    socket.on('messageSent', (msg: ChatMessage) => {
-      if (activeChatRef.current === msg.to._id) {
-        setMessages((prev) => {
-          if (prev.some((m) => m._id === msg._id)) return prev;
-          return [...prev, msg];
-        });
-        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
-      }
-      fetchConvos();
-    });
+    socket.on('newMessage', (msg: ChatMessage) => addMsg(msg, 'from'));
+    socket.on('messageSent', (msg: ChatMessage) => addMsg(msg, 'to'));
 
-    return () => { socket.disconnect(); socketRef.current = null; };
+    return () => { socket.disconnect(); };
   }, [accessToken, fetchConvos]);
 
-  // Polling fallback — in case WebSocket isn't connected
-  const pollRef = useRef<ReturnType<typeof setInterval>>(null);
-  useEffect(() => {
-    if (!activeChat || !accessToken) return;
-    // Poll every 10s as fallback
-    pollRef.current = setInterval(() => {
-      fetchChat(activeChat);
-      fetchConvos();
-    }, 10000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [activeChat, accessToken, fetchChat, fetchConvos]);
-
-  // Open a conversation
+  // --- Actions ---
   function openChat(userId: string, name: string) {
     setActiveChat(userId);
     setActiveName(name);
@@ -151,24 +141,39 @@ export default function MessagesPage() {
     fetchConvos();
   }
 
-  // Send message — always refetch conversation after sending
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
-    if (!newMsg.trim() || !activeChat || !accessToken) return;
+    if (!newMsg.trim() || !activeChat || !accessToken || !user) return;
     const body = newMsg.trim();
     setSending(true);
     setNewMsg('');
+
+    // Optimistic: show message instantly before server responds
+    const optimisticId = `temp-${Date.now()}`;
+    const optimisticMsg: ChatMessage = {
+      _id: optimisticId,
+      body,
+      createdAt: new Date().toISOString(),
+      from: { _id: user._id, name: user.name, avatar: user.avatar },
+      to: { _id: activeChat, name: activeName },
+    };
+    setMessages((prev) => [...prev, optimisticMsg]);
+    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+
     try {
       await api.sendMessage({ to: activeChat, body }, accessToken);
-      // Always refetch — this is the source of truth
+      // Replace optimistic message with real data from server
       fetchChat(activeChat);
       fetchConvos();
-      inputRef.current?.focus();
-    } catch { /* ignore */ }
+    } catch {
+      // Remove optimistic message on failure
+      setMessages((prev) => prev.filter((m) => m._id !== optimisticId));
+    }
     setSending(false);
+    inputRef.current?.focus();
   }
 
-  // User search (inline in sidebar)
+  // User search
   useEffect(() => {
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
     if (searchQuery.length < 2 || !accessToken) { setSearchResults([]); return; }
@@ -206,7 +211,6 @@ export default function MessagesPage() {
               className={`flex flex-col ${activeChat ? 'hidden md:flex' : 'flex'}`}
               style={{ width: '100%', maxWidth: '320px', background: 'rgba(15,17,21,0.8)', borderRight: '1px solid var(--color-outline-variant)' }}
             >
-              {/* Header + search input always visible */}
               <div className="p-4" style={{ borderBottom: '1px solid var(--color-outline-variant)' }}>
                 <h1 className="text-lg font-bold text-on-surface mb-3">Chats</h1>
                 <input
@@ -219,10 +223,8 @@ export default function MessagesPage() {
                 />
               </div>
 
-              {/* Search results or conversation list */}
               <div className="flex-1 overflow-y-auto">
                 {searchQuery.length >= 2 && searchResults.length > 0 ? (
-                  /* Search results */
                   <div>
                     <p className="px-4 pt-3 pb-1 text-xs text-on-surface-variant font-medium uppercase">Usuarios</p>
                     {searchResults.map((u) => (
@@ -251,7 +253,6 @@ export default function MessagesPage() {
                     <p className="text-on-surface-variant text-xs mt-1">Busca un usuario para chatear</p>
                   </div>
                 ) : (
-                  /* Conversation list */
                   conversations.map((c) => (
                     <button
                       key={c.recipientId}
@@ -304,7 +305,6 @@ export default function MessagesPage() {
                 </div>
               ) : (
                 <>
-                  {/* Chat header */}
                   <div className="px-4 py-3 flex items-center gap-3" style={{ borderBottom: '1px solid var(--color-outline-variant)' }}>
                     <button
                       onClick={() => setActiveChat(null)}
@@ -320,7 +320,6 @@ export default function MessagesPage() {
                     <span className="text-on-surface font-medium">{activeName}</span>
                   </div>
 
-                  {/* Messages */}
                   <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
                     {loadingChat ? (
                       <p className="text-on-surface-variant text-sm text-center py-8">Cargando...</p>
@@ -329,7 +328,8 @@ export default function MessagesPage() {
                     ) : (
                       <>
                         {messages.map((msg) => {
-                          const isMe = msg.from._id === user?._id;
+                          const fromId = typeof msg.from === 'object' ? msg.from._id : msg.from;
+                          const isMe = String(fromId) === String(user?._id);
                           return (
                             <div key={msg._id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                               <div
@@ -354,7 +354,6 @@ export default function MessagesPage() {
                     )}
                   </div>
 
-                  {/* Input */}
                   <form
                     onSubmit={handleSend}
                     className="px-4 py-3 flex items-center gap-3"

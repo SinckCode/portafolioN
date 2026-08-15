@@ -69,6 +69,7 @@ export default function AdminMensajes() {
   const inputRef = useRef<HTMLInputElement>(null);
   const socketRef = useRef<Socket | null>(null);
   const activeChatRef = useRef<string | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval>>(null);
 
   useEffect(() => { activeChatRef.current = activeChat; }, [activeChat]);
 
@@ -102,7 +103,18 @@ export default function AdminMensajes() {
       .catch(() => {});
   }, [accessToken]);
 
-  // Socket
+  // Polling: primary real-time mechanism (3s)
+  useEffect(() => {
+    if (!activeChat || !accessToken) return;
+    pollRef.current = setInterval(() => {
+      fetchChat(activeChat);
+      fetchMyConvos();
+      fetchAllConvos();
+    }, 3000);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, [activeChat, accessToken, fetchChat, fetchMyConvos, fetchAllConvos]);
+
+  // Socket: bonus instant delivery
   useEffect(() => {
     if (!accessToken) return;
     const socket = io(`${WS_URL}/messages`, {
@@ -175,21 +187,35 @@ export default function AdminMensajes() {
       .finally(() => setLoadingChat(false));
   }
 
-  // Send message — always refetch after sending
+  // Send message with optimistic update
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
-    if (!newMsg.trim() || !activeChat || !accessToken) return;
+    if (!newMsg.trim() || !activeChat || !accessToken || !user) return;
     const body = newMsg.trim();
     setSending(true);
     setNewMsg('');
+
+    const optimisticId = `temp-${Date.now()}`;
+    const optimisticMsg: ChatMessage = {
+      _id: optimisticId,
+      body,
+      createdAt: new Date().toISOString(),
+      from: { _id: user._id, name: user.name, avatar: user.avatar },
+      to: { _id: activeChat, name: activeName },
+    };
+    setMessages((prev) => [...prev, optimisticMsg]);
+    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+
     try {
       await api.sendMessage({ to: activeChat, body }, accessToken);
       fetchChat(activeChat);
       fetchMyConvos();
       fetchAllConvos();
-      inputRef.current?.focus();
-    } catch { /* ignore */ }
+    } catch {
+      setMessages((prev) => prev.filter((m) => m._id !== optimisticId));
+    }
     setSending(false);
+    inputRef.current?.focus();
   }
 
   async function handleDeleteMsg(id: string) {
@@ -386,7 +412,8 @@ export default function AdminMensajes() {
                 ) : (
                   <>
                     {messages.map((msg) => {
-                      const isMe = msg.from._id === user?._id;
+                      const fromId = typeof msg.from === 'object' ? msg.from._id : msg.from;
+                      const isMe = String(fromId) === String(user?._id);
                       return viewingPair ? (
                         /* Admin view: show all messages linearly with delete */
                         <div key={msg._id} className="group flex items-start gap-2">
