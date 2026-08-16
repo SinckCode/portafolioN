@@ -37,7 +37,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadUser = useCallback(async (token: string) => {
     try {
       const user = await api.getProfile(token) as User;
-      setState({ user, accessToken: token, isLoading: false });
+      // fetchApi may have auto-refreshed the token during getProfile,
+      // so always read the current token from localStorage
+      const currentToken = localStorage.getItem('accessToken') || token;
+      setState({ user, accessToken: currentToken, isLoading: false });
     } catch {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
@@ -57,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Sincronizar cuando fetchApi auto-refresca el token
   useEffect(() => {
     return onTokenRefresh((newToken) => {
-      setState((prev) => prev.user ? { ...prev, accessToken: newToken } : prev);
+      setState((prev) => ({ ...prev, accessToken: newToken }));
     });
   }, []);
 
