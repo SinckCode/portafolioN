@@ -67,12 +67,15 @@ export default function AdminMensajes() {
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const socketRef = useRef<Socket | null>(null);
   const activeChatRef = useRef<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval>>(null);
-  const sendingRef = useRef(false);
+  const [wsConnected, setWsConnected] = useState(false);
 
   useEffect(() => { activeChatRef.current = activeChat; }, [activeChat]);
+
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior }), 50);
+  }, []);
 
   // Fetch my conversations
   const fetchMyConvos = useCallback(() => {
@@ -94,72 +97,84 @@ export default function AdminMensajes() {
 
   useEffect(() => { fetchMyConvos(); fetchAllConvos(); }, [fetchMyConvos, fetchAllConvos]);
 
-  const fetchChat = useCallback((userId: string) => {
-    if (!accessToken) return;
-    api.getConversation(userId, accessToken)
-      .then((data) => {
-        const serverMsgs = (data as ChatMessage[]) || [];
-        setMessages((prev) => {
-          const serverIds = new Set(serverMsgs.map((m) => m._id));
-          const optimistic = prev.filter((m) => m._id.startsWith('temp-') && !serverIds.has(m._id));
-          return [...serverMsgs, ...optimistic];
-        });
-        if (serverMsgs.length > 0) {
-          setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-        }
-      })
-      .catch(() => {});
-  }, [accessToken]);
-
-  // Polling: primary real-time mechanism (3s), skips while sending
-  useEffect(() => {
-    if (!activeChat || !accessToken) return;
-    pollRef.current = setInterval(() => {
-      if (sendingRef.current) return;
-      fetchChat(activeChat);
-      fetchMyConvos();
-      fetchAllConvos();
-    }, 3000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [activeChat, accessToken, fetchChat, fetchMyConvos, fetchAllConvos]);
-
-  // Socket: bonus instant delivery
+  // --- WebSocket: PRIMARY real-time mechanism ---
   useEffect(() => {
     if (!accessToken) return;
+
     const socket = io(`${WS_URL}/messages`, {
-      auth: { token: accessToken },
+      auth: (cb: (data: { token: string }) => void) => {
+        cb({ token: localStorage.getItem('accessToken') || accessToken });
+      },
       transports: ['websocket', 'polling'],
       reconnection: true,
+      reconnectionDelay: 2000,
+      reconnectionAttempts: Infinity,
     });
-    socketRef.current = socket;
+
+    socket.on('connect', () => {
+      setWsConnected(true);
+      fetchMyConvos();
+      fetchAllConvos();
+      const chatId = activeChatRef.current;
+      if (chatId) {
+        api.getConversation(chatId, localStorage.getItem('accessToken') || accessToken)
+          .then((data) => { setMessages((data as ChatMessage[]) || []); scrollToBottom(); })
+          .catch(() => {});
+      }
+    });
+
+    socket.on('disconnect', () => setWsConnected(false));
 
     socket.on('newMessage', (msg: ChatMessage) => {
-      if (activeChatRef.current === msg.from?._id) {
+      const fromId = typeof msg.from === 'object' ? msg.from._id : msg.from;
+      if (activeChatRef.current === fromId) {
         setMessages((prev) => {
           if (prev.some((m) => m._id === msg._id)) return prev;
           return [...prev, msg];
         });
-        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+        scrollToBottom();
       }
       fetchMyConvos();
       fetchAllConvos();
     });
 
     socket.on('messageSent', (msg: ChatMessage) => {
-      if (activeChatRef.current === msg.to?._id) {
+      const toId = typeof msg.to === 'object' ? msg.to._id : msg.to;
+      if (activeChatRef.current === toId) {
         setMessages((prev) => {
           if (prev.some((m) => m._id === msg._id)) return prev;
-          const cleaned = prev.filter((m) => !(m._id.startsWith('temp-') && m.body === msg.body));
-          return [...cleaned, msg];
+          const tempIdx = prev.findIndex((m) => m._id.startsWith('temp-') && m.body === msg.body);
+          if (tempIdx >= 0) {
+            const updated = [...prev];
+            updated[tempIdx] = msg;
+            return updated;
+          }
+          return [...prev, msg];
         });
-        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
       }
       fetchMyConvos();
       fetchAllConvos();
     });
 
     return () => { socket.disconnect(); };
-  }, [accessToken, fetchMyConvos, fetchAllConvos]);
+  }, [accessToken, fetchMyConvos, fetchAllConvos, scrollToBottom]);
+
+  // --- Fallback polling: ONLY when WebSocket is disconnected (10s) ---
+  useEffect(() => {
+    if (wsConnected || !activeChat || !accessToken) {
+      if (pollRef.current) clearInterval(pollRef.current);
+      pollRef.current = null;
+      return;
+    }
+    pollRef.current = setInterval(() => {
+      api.getConversation(activeChat, accessToken)
+        .then((data) => setMessages((data as ChatMessage[]) || []))
+        .catch(() => {});
+      fetchMyConvos();
+      fetchAllConvos();
+    }, 10000);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, [wsConnected, activeChat, accessToken, fetchMyConvos, fetchAllConvos]);
 
   // Open chat with a user (admin chats as themselves)
   function openChat(userId: string, name: string) {
@@ -173,7 +188,7 @@ export default function AdminMensajes() {
     api.getConversation(userId, accessToken!)
       .then((data) => {
         setMessages((data as ChatMessage[]) || []);
-        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'auto' }), 50);
+        scrollToBottom('auto');
       })
       .catch(() => {})
       .finally(() => setLoadingChat(false));
@@ -191,19 +206,18 @@ export default function AdminMensajes() {
     api.getAdminConversation(c.userA._id, c.userB._id, accessToken!)
       .then((data) => {
         setMessages((data as ChatMessage[]) || []);
-        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'auto' }), 50);
+        scrollToBottom('auto');
       })
       .catch(() => {})
       .finally(() => setLoadingChat(false));
   }
 
-  // Send message with optimistic update
+  // Send message — HTTP response is source of truth (Rocket.Chat pattern)
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
     if (!newMsg.trim() || !activeChat || !accessToken || !user) return;
     const body = newMsg.trim();
     setSending(true);
-    sendingRef.current = true;
     setNewMsg('');
 
     const optimisticId = `temp-${Date.now()}`;
@@ -215,16 +229,14 @@ export default function AdminMensajes() {
       to: { _id: activeChat, name: activeName },
     };
     setMessages((prev) => [...prev, optimisticMsg]);
-    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+    scrollToBottom();
 
     try {
-      await api.sendMessage({ to: activeChat, body }, accessToken);
-      sendingRef.current = false;
-      fetchChat(activeChat);
+      const saved = await api.sendMessage({ to: activeChat, body }, accessToken) as ChatMessage;
+      setMessages((prev) => prev.map((m) => m._id === optimisticId ? saved : m));
       fetchMyConvos();
       fetchAllConvos();
     } catch {
-      sendingRef.current = false;
       setMessages((prev) => prev.filter((m) => m._id !== optimisticId));
     }
     setSending(false);

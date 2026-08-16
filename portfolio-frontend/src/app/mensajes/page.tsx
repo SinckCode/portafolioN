@@ -43,6 +43,7 @@ export default function MessagesPage() {
   const [sending, setSending] = useState(false);
   const [loadingConvos, setLoadingConvos] = useState(true);
   const [loadingChat, setLoadingChat] = useState(false);
+  const [wsConnected, setWsConnected] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserOption[]>([]);
@@ -52,7 +53,6 @@ export default function MessagesPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const activeChatRef = useRef<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval>>(null);
-  const sendingRef = useRef(false);
 
   useEffect(() => { activeChatRef.current = activeChat; }, [activeChat]);
 
@@ -61,7 +61,11 @@ export default function MessagesPage() {
     if (!user || !accessToken) router.push('/login?returnUrl=/mensajes');
   }, [user, accessToken, isLoading, router]);
 
-  // --- Data fetching ---
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior }), 50);
+  }, []);
+
+  // --- Data fetching (only on demand, never polling) ---
   const fetchConvos = useCallback(() => {
     if (!accessToken) return;
     api.getConversations(accessToken)
@@ -72,75 +76,89 @@ export default function MessagesPage() {
 
   useEffect(() => { fetchConvos(); }, [fetchConvos]);
 
-  const fetchChat = useCallback((userId: string, hard = false) => {
-    if (!accessToken) return;
-    api.getConversation(userId, accessToken)
-      .then((data) => {
-        const serverMsgs = (data as ChatMessage[]) || [];
-        if (hard) {
-          setMessages(serverMsgs);
-        } else {
-          // Merge: keep optimistic (temp-*) messages that aren't in server data yet
-          setMessages((prev) => {
-            const serverIds = new Set(serverMsgs.map((m) => m._id));
-            const optimistic = prev.filter((m) => m._id.startsWith('temp-') && !serverIds.has(m._id));
-            return [...serverMsgs, ...optimistic];
-          });
-        }
-        if (serverMsgs.length > 0) {
-          setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 80);
-        }
-      })
-      .catch(() => {});
-  }, [accessToken]);
-
-  // --- Polling: primary real-time mechanism (3s), skips while sending ---
-  useEffect(() => {
-    if (!activeChat || !accessToken) return;
-    pollRef.current = setInterval(() => {
-      if (sendingRef.current) return;
-      fetchChat(activeChat);
-      fetchConvos();
-    }, 3000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [activeChat, accessToken, fetchChat, fetchConvos]);
-
-  // --- WebSocket: bonus instant delivery ---
+  // --- WebSocket: PRIMARY real-time mechanism (pattern: Rocket.Chat / Socket.IO official) ---
   useEffect(() => {
     if (!accessToken) return;
+
     const socket = io(`${WS_URL}/messages`, {
-      auth: { token: accessToken },
+      // Auth function: always reads current token (survives auto-refresh)
+      auth: (cb: (data: { token: string }) => void) => {
+        cb({ token: localStorage.getItem('accessToken') || accessToken });
+      },
       transports: ['websocket', 'polling'],
       reconnection: true,
-      reconnectionDelay: 3000,
+      reconnectionDelay: 2000,
+      reconnectionAttempts: Infinity,
     });
 
+    socket.on('connect', () => {
+      setWsConnected(true);
+      // On reconnect: catch up on missed data
+      fetchConvos();
+      const chatId = activeChatRef.current;
+      if (chatId) {
+        api.getConversation(chatId, localStorage.getItem('accessToken') || accessToken)
+          .then((data) => {
+            setMessages((data as ChatMessage[]) || []);
+            scrollToBottom();
+          })
+          .catch(() => {});
+      }
+    });
+
+    socket.on('disconnect', () => setWsConnected(false));
+
+    // Message from another user → add to chat if active
     socket.on('newMessage', (msg: ChatMessage) => {
-      if (activeChatRef.current === msg.from?._id) {
+      const fromId = typeof msg.from === 'object' ? msg.from._id : msg.from;
+      if (activeChatRef.current === fromId) {
         setMessages((prev) => {
           if (prev.some((m) => m._id === msg._id)) return prev;
           return [...prev, msg];
         });
-        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+        scrollToBottom();
       }
       fetchConvos();
     });
 
+    // My own message confirmed via WS (backup for HTTP response)
     socket.on('messageSent', (msg: ChatMessage) => {
-      if (activeChatRef.current === msg.to?._id) {
+      const toId = typeof msg.to === 'object' ? msg.to._id : msg.to;
+      if (activeChatRef.current === toId) {
         setMessages((prev) => {
+          // Already present from HTTP response? skip
           if (prev.some((m) => m._id === msg._id)) return prev;
-          // Remove optimistic temp messages with same body to avoid dupes
-          const cleaned = prev.filter((m) => !(m._id.startsWith('temp-') && m.body === msg.body));
-          return [...cleaned, msg];
+          // Replace optimistic temp message
+          const tempIdx = prev.findIndex((m) => m._id.startsWith('temp-') && m.body === msg.body);
+          if (tempIdx >= 0) {
+            const updated = [...prev];
+            updated[tempIdx] = msg;
+            return updated;
+          }
+          return [...prev, msg];
         });
-        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
       }
       fetchConvos();
     });
 
     return () => { socket.disconnect(); };
-  }, [accessToken, fetchConvos]);
+  }, [accessToken, fetchConvos, scrollToBottom]);
+
+  // --- Fallback polling: ONLY when WebSocket is disconnected (10s, not 3s) ---
+  useEffect(() => {
+    if (wsConnected || !activeChat || !accessToken) {
+      if (pollRef.current) clearInterval(pollRef.current);
+      pollRef.current = null;
+      return;
+    }
+    pollRef.current = setInterval(() => {
+      api.getConversation(activeChat, accessToken)
+        .then((data) => setMessages((data as ChatMessage[]) || []))
+        .catch(() => {});
+      fetchConvos();
+    }, 10000);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, [wsConnected, activeChat, accessToken, fetchConvos]);
 
   // --- Actions ---
   function openChat(userId: string, name: string) {
@@ -153,7 +171,7 @@ export default function MessagesPage() {
     api.getConversation(userId, accessToken!)
       .then((data) => {
         setMessages((data as ChatMessage[]) || []);
-        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'auto' }), 50);
+        scrollToBottom('auto');
       })
       .catch(() => {})
       .finally(() => setLoadingChat(false));
@@ -161,14 +179,15 @@ export default function MessagesPage() {
     fetchConvos();
   }
 
+  // Pattern: Rocket.Chat — HTTP response IS the source of truth for the sender
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
     if (!newMsg.trim() || !activeChat || !accessToken || !user) return;
     const body = newMsg.trim();
     setSending(true);
-    sendingRef.current = true;
     setNewMsg('');
 
+    // 1. Show optimistic message instantly
     const optimisticId = `temp-${Date.now()}`;
     const optimisticMsg: ChatMessage = {
       _id: optimisticId,
@@ -178,16 +197,15 @@ export default function MessagesPage() {
       to: { _id: activeChat, name: activeName },
     };
     setMessages((prev) => [...prev, optimisticMsg]);
-    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+    scrollToBottom();
 
     try {
-      await api.sendMessage({ to: activeChat, body }, accessToken);
-      // After server confirms, fetch real data (merge keeps optimistic until server catches up)
-      sendingRef.current = false;
-      fetchChat(activeChat);
+      // 2. POST returns the saved message — use it directly (no refetch!)
+      const saved = await api.sendMessage({ to: activeChat, body }, accessToken) as ChatMessage;
+      setMessages((prev) => prev.map((m) => m._id === optimisticId ? saved : m));
       fetchConvos();
     } catch {
-      sendingRef.current = false;
+      // 3. On failure: remove optimistic message
       setMessages((prev) => prev.filter((m) => m._id !== optimisticId));
     }
     setSending(false);
