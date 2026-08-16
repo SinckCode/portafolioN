@@ -30,6 +30,8 @@ interface ChatMessage {
   createdAt: string;
   from: { _id: string; name: string; avatar?: string };
   to: { _id: string; name: string; avatar?: string };
+  delivered?: boolean;
+  read?: boolean;
 }
 
 interface UserOption {
@@ -69,6 +71,7 @@ export default function AdminMensajes() {
   const inputRef = useRef<HTMLInputElement>(null);
   const activeChatRef = useRef<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval>>(null);
+  const socketRef = useRef<Socket | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
 
   useEffect(() => { activeChatRef.current = activeChat; }, [activeChat]);
@@ -110,6 +113,7 @@ export default function AdminMensajes() {
       reconnectionDelay: 2000,
       reconnectionAttempts: Infinity,
     });
+    socketRef.current = socket;
 
     socket.on('connect', () => {
       setWsConnected(true);
@@ -125,19 +129,23 @@ export default function AdminMensajes() {
 
     socket.on('disconnect', () => setWsConnected(false));
 
+    // Message from another user → add to chat + confirm delivery
     socket.on('newMessage', (msg: ChatMessage) => {
       const fromId = typeof msg.from === 'object' ? msg.from._id : msg.from;
       if (activeChatRef.current === fromId) {
         setMessages((prev) => {
           if (prev.some((m) => m._id === msg._id)) return prev;
-          return [...prev, msg];
+          return [...prev, { ...msg, delivered: true }];
         });
         scrollToBottom();
       }
+      // Confirm delivery to sender
+      socket.emit('messageDelivered', { messageId: msg._id });
       fetchMyConvos();
       fetchAllConvos();
     });
 
+    // My own message confirmed via WS (backup for HTTP response)
     socket.on('messageSent', (msg: ChatMessage) => {
       const toId = typeof msg.to === 'object' ? msg.to._id : msg.to;
       if (activeChatRef.current === toId) {
@@ -156,7 +164,20 @@ export default function AdminMensajes() {
       fetchAllConvos();
     });
 
-    return () => { socket.disconnect(); };
+    // Status updates: delivered ✓✓ or read ✓✓ blue
+    socket.on('statusUpdate', (data: { messageId?: string; messageIds?: string[]; delivered?: boolean; read?: boolean }) => {
+      setMessages((prev) => prev.map((m) => {
+        const ids = data.messageIds || (data.messageId ? [data.messageId] : []);
+        if (!ids.includes(m._id)) return m;
+        return {
+          ...m,
+          ...(data.delivered ? { delivered: true } : {}),
+          ...(data.read ? { read: true, delivered: true } : {}),
+        };
+      }));
+    });
+
+    return () => { socket.disconnect(); socketRef.current = null; };
   }, [accessToken, fetchMyConvos, fetchAllConvos, scrollToBottom]);
 
   // --- Fallback polling: ONLY when WebSocket is disconnected (10s) ---
@@ -477,8 +498,31 @@ export default function AdminMensajes() {
                             }}
                           >
                             <p style={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{msg.body}</p>
-                            <p className="text-right mt-1" style={{ fontSize: '0.65rem', opacity: 0.6 }}>
+                            <p className="text-right mt-1 flex items-center justify-end gap-0.5" style={{ fontSize: '0.65rem', opacity: 0.6 }}>
                               {new Date(msg.createdAt).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
+                              {isMe && (
+                                <span className="inline-flex items-center ml-0.5">
+                                  {msg._id.startsWith('temp-') ? (
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                                      <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                                    </svg>
+                                  ) : msg.read ? (
+                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                      <polyline points="1 12 5 16 12 6" stroke="#53bdeb" />
+                                      <polyline points="7 12 11 16 18 6" stroke="#53bdeb" />
+                                    </svg>
+                                  ) : msg.delivered ? (
+                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                      <polyline points="1 12 5 16 12 6" />
+                                      <polyline points="7 12 11 16 18 6" />
+                                    </svg>
+                                  ) : (
+                                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                                      <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                  )}
+                                </span>
+                              )}
                             </p>
                           </div>
                         </div>

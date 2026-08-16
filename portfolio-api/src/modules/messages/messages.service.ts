@@ -103,11 +103,26 @@ export class MessagesService {
     const uid = new Types.ObjectId(userId);
     const otherId = new Types.ObjectId(otherUserId);
 
-    // Marcar como leídos los mensajes que me enviaron
-    await this.messageModel.updateMany(
+    // Find unread messages from the other user to mark as read
+    const unreadMsgs = await this.messageModel.find(
       { from: otherId, to: uid, read: false },
-      { $set: { read: true, readAt: new Date() } },
-    );
+      { _id: 1 },
+    ).lean();
+
+    if (unreadMsgs.length > 0) {
+      await this.messageModel.updateMany(
+        { _id: { $in: unreadMsgs.map((m) => m._id) } },
+        { $set: { read: true, readAt: new Date() } },
+      );
+
+      // Notify the sender that their messages were read
+      try {
+        this.messagesGateway.emitReadUpdate(
+          otherUserId,
+          unreadMsgs.map((m) => String(m._id)),
+        );
+      } catch { /* best-effort */ }
+    }
 
     return this.messageModel
       .find({

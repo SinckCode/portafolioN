@@ -13,6 +13,12 @@ export class Message extends Document {
   body: string;
 
   @Prop({ default: false })
+  delivered: boolean;
+
+  @Prop()
+  deliveredAt: Date;
+
+  @Prop({ default: false })
   read: boolean;
 
   @Prop()
