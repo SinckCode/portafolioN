@@ -498,27 +498,29 @@ export default function AdminMensajes() {
                             }}
                           >
                             <p style={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{msg.body}</p>
-                            <p className="text-right mt-1 flex items-center justify-end gap-0.5" style={{ fontSize: '0.65rem', opacity: 0.6 }}>
-                              {new Date(msg.createdAt).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
+                            <p className="text-right mt-1 flex items-center justify-end gap-0.5" style={{ fontSize: '0.65rem' }}>
+                              <span style={{ opacity: 0.6 }}>
+                                {new Date(msg.createdAt).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
                               {isMe && (
                                 <span className="inline-flex items-center ml-0.5">
                                   {msg._id.startsWith('temp-') ? (
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} style={{ opacity: 0.5 }}>
                                       <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
                                     </svg>
                                   ) : msg.read ? (
-                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                                      <polyline points="1 12 5 16 12 6" stroke="#53bdeb" />
-                                      <polyline points="7 12 11 16 18 6" stroke="#53bdeb" />
+                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                                      <polyline points="1 12 5 16 12 6" stroke="#fbbf24" />
+                                      <polyline points="7 12 11 16 18 6" stroke="#fbbf24" />
                                     </svg>
                                   ) : msg.delivered ? (
-                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                                      <polyline points="1 12 5 16 12 6" />
-                                      <polyline points="7 12 11 16 18 6" />
+                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                                      <polyline points="1 12 5 16 12 6" stroke="#a3e635" />
+                                      <polyline points="7 12 11 16 18 6" stroke="#a3e635" />
                                     </svg>
                                   ) : (
-                                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                                      <polyline points="20 6 9 17 4 12" />
+                                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                                      <polyline points="20 6 9 17 4 12" stroke="#fff" />
                                     </svg>
                                   )}
                                 </span>
