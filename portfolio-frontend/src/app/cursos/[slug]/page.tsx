@@ -22,7 +22,10 @@ async function getCourse(slug: string): Promise<CourseData | null> {
       next: { revalidate: 300 },
     });
     if (!res.ok) return null;
-    return (await res.json()) as CourseData;
+    // El API envuelve las respuestas en { data: ... } (TransformInterceptor).
+    // Sin desenvolver, la pagina emitia canonical /cursos/undefined.
+    const json = await res.json();
+    return (json.data ?? json) as CourseData;
   } catch {
     return null;
   }
