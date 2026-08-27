@@ -70,34 +70,38 @@ También se verificó P0 y P1 en el mismo build:
 
 ---
 
-## P3 — Conflicto robots.txt con Cloudflare ❌ PENDIENTE
+## P3 — Conflicto robots.txt con Cloudflare ✅ RESUELTO (sin cambios de código)
 
-El `robots.txt` en producción tiene dos bloques `User-agent: *`:
+### Qué pasa realmente
 
-```
-# Cloudflare Managed Content
-User-agent: *
-Content-Signal: search=yes,ai-train=no,use=reference
-Allow: /
+El feature **"Managed robots.txt"** de Cloudflare (Security Settings → filtro *Bot traffic* → *Set your preference to block training in robots.txt*) **antepone** su bloque al `robots.txt` de la app. No sustituye ni edita el nuestro: concatena ambos en una sola respuesta. Por eso `robots.ts` no puede resolverlo — el bloque de CF se inyecta en el edge, después de que Next.js sirvió el suyo.
 
-# App (robots.ts)
-User-Agent: *
-Allow: /
-Disallow: /admin/
-Disallow: /perfil/
-Disallow: /api/
-```
+### Por qué NO era un problema de indexación
 
-Dos bloques `User-agent: *` es ambiguo según la spec. Además Cloudflare bloquea varios crawlers AI (ClaudeBot, GPTBot, etc.).
+1. **Googlebot no está bloqueado.** La lista de CF cubre solo bots de *entrenamiento*: Amazonbot, Applebot-Extended, Bytespider, CCBot, ClaudeBot, Google-Extended, GPTBot, meta-externalagent. `Googlebot` no aparece — y `Google-Extended` es Gemini training, no la búsqueda.
+2. **Los dos bloques `User-agent: *` no son ambiguos para Google.** Según la spec, los grupos con el mismo token se fusionan internamente. El resultado efectivo es exactamente lo que queríamos:
+   - `Allow: /`
+   - `Disallow: /admin/`, `/perfil/`, `/api/`
+   Y para `/admin/` gana el `Disallow` porque la regla más larga (más específica) tiene precedencia sobre `Allow: /`.
+3. **Los crawlers de *respuesta* de IA no están bloqueados.** `OAI-SearchBot`, `PerplexityBot` y `Claude-SearchBot` no están en la lista de CF, así que el contenido sí puede citarse en respuestas de IA.
 
-### Opciones
-- (a) Desactivar Cloudflare managed content en el dashboard de CF
-- (b) Unificar en un solo bloque desde `robots.ts`
-- (c) Aceptar la ambigüedad (Google toma el más específico)
+Neto: la configuración actual equivale a `search=yes, ai-train=no` — se indexa y se puede citar, pero no se usa para entrenar. Es una postura razonable para una marca personal.
+
+### Decisión: opción (c) — dejarlo como está
+
+No requiere cambio de código. `robots.ts` se queda igual.
+
+### Si en el futuro se quiere permitir también el entrenamiento
+
+Es un toggle de dashboard, no automatizable desde este repo (solo hay `cloudflared` en Ansible; Terraform no tiene provider de Cloudflare):
+
+> Cloudflare dashboard → zona `angelonesto.com` → **Security Settings** → filtrar por **Bot traffic** → **Set your preference to block training in robots.txt** → apagar.
+
+Al apagarlo, `robots.txt` pasa a servir únicamente lo que genera `src/app/robots.ts`.
 
 ---
 
-## Archivos modificados (sin commit)
+## Archivos modificados (commit `a27947e`)
 
 | Archivo | Tipo | Prioridad |
 |---|---|---|
@@ -114,3 +118,22 @@ Dos bloques `User-agent: *` es ambiguo según la spec. Además Cloudflare bloque
 | `public/favicon.svg` | Nuevo | P2 |
 | `public/manifest.json` | Modificado | P2 |
 | `next.config.ts` | Modificado | P2 |
+
+---
+
+## Estado final
+
+| Prioridad | Estado | Dónde |
+|---|---|---|
+| P0 — bailout a CSR | ✅ Resuelto y verificado | commit `a27947e` |
+| P1 — `opacity:0` en SSR | ✅ Resuelto y verificado | commit `a27947e` |
+| P2 — 404 de favicon | ✅ Resuelto y verificado | commit `a27947e` |
+| P3 — robots.txt / Cloudflare | ✅ Resuelto (no requería cambios) | decisión documentada |
+
+### Pendiente de operación
+
+- [ ] `git push` → dispara el CI/CD y despliega el fix
+- [ ] Verificar en producción: `curl -s https://angelonesto.com/ | grep -c 'opacity:0'` debe dar **0**, y `/favicon.ico` debe dar **200**
+- [ ] Solo **después** de confirmar el despliegue: pedir reindexación en GSC (URL Inspection → Request Indexing) para `https://angelonesto.com/` y reenviar el sitemap
+
+> Pedir reindexación antes del despliegue es contraproducente: Google recrawlearía la versión rota, reconfirmaría "descubierta sin indexar" y se gastaría la cuota diaria de solicitudes manuales.
