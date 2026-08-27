@@ -11,10 +11,6 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
     ],
   },
-  // /favicon.ico → SVG para evitar 404 en GSC
-  async rewrites() {
-    return [{ source: '/favicon.ico', destination: '/favicon.svg' }];
-  },
   // Cabeceras de seguridad (complementan a Cloudflare; ver Fase 3 de blindaje)
   async headers() {
     return [
