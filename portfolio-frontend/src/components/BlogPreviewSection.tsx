@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import Icon from '@/components/ui/Icon';
 import SectionHeading from '@/components/ui/SectionHeading';
-import { api } from '@/lib/api';
+import { api, toList } from '@/lib/api';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 // Preview del blog en el home (diseño de la SPA + posts del CMS):
@@ -78,8 +78,7 @@ export default function BlogPreviewSection() {
     api
       .getPosts({ limit: '3', status: 'published' })
       .then((data) => {
-        const items = ((data as { data: PostPreview[] }).data || []) as PostPreview[];
-        setPosts(items);
+        setPosts(toList<PostPreview>(data));
       })
       .catch(() => {})
       .finally(() => setLoaded(true));

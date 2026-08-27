@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import Icon from '@/components/ui/Icon';
 import SectionHeading from '@/components/ui/SectionHeading';
 import { getTechColor } from '@/lib/techColors';
-import { api } from '@/lib/api';
+import { api, toList } from '@/lib/api';
 
 // Sección de servicios (diseño de la SPA + datos del CMS):
 // lo que se edite en /admin/servicios se refleja aquí.
@@ -43,8 +43,7 @@ export default function ServicesSection() {
     api
       .getServices()
       .then((data) => {
-        const items = ((data as { data: Service[] }).data || []) as Service[];
-        setServices(items);
+        setServices(toList<Service>(data));
       })
       .catch(() => {});
   }, []);

@@ -379,4 +379,19 @@ export const api = {
     fetchApi('/generation/blog', { method: 'POST', body: JSON.stringify(data), token }),
 };
 
+/**
+ * Normaliza la respuesta de un endpoint de listado a un array.
+ *
+ * fetchApi() ya desenvuelve el envelope { data: ... } del API, asi que lo
+ * que llega aqui normalmente ya es el array. El caso `.data` queda como
+ * red de seguridad por si algun endpoint devuelve el envelope sin
+ * desenvolver. Hacer `(data as { data: T[] }).data || []` sobre un array
+ * ya desenvuelto daba siempre [] — era la causa de secciones vacias.
+ */
+export function toList<T>(data: unknown): T[] {
+  if (Array.isArray(data)) return data as T[];
+  const inner = (data as { data?: unknown } | null)?.data;
+  return Array.isArray(inner) ? (inner as T[]) : [];
+}
+
 export default api;

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { api } from '@/lib/api';
+import { api, toList } from '@/lib/api';
 import { Project } from '@/types';
 
 // Hero premium (port de la SPA): badge de disponibilidad, nombre con
@@ -48,7 +48,7 @@ export default function HeroSection() {
     api
       .getProjects({ limit: '100' })
       .then((data) => {
-        const items = ((data as { data: Project[] }).data || []) as Project[];
+        const items = toList<Project>(data);
         if (items.length > 0) {
           setStats({
             projects: items.length,
