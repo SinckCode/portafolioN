@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import emailjs from '@emailjs/browser';
 import Icon from '@/components/ui/Icon';
 import SectionHeading from '@/components/ui/SectionHeading';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 // Contacto premium (port de la SPA): labels flotantes, validación,
 // honeypot, checkmark animado y cards de contacto con copy-to-clipboard.
@@ -58,8 +59,28 @@ const SuccessCheck = () => (
   </motion.svg>
 );
 
+const infoVariants = {
+  hidden: { opacity: 0, x: -40 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const },
+  },
+};
+
+const formVariants = {
+  hidden: { opacity: 0, x: 40 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const },
+  },
+};
+
 export default function ContactSection() {
   const form = useRef<HTMLFormElement>(null);
+  const info = useScrollReveal({ once: true, amount: 0.3 });
+  const formContainer = useScrollReveal({ once: true, amount: 0.3 });
   const [values, setValues] = useState({ name: '', email: '', message: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Status>('idle');
@@ -161,10 +182,9 @@ export default function ContactSection() {
 
         <div className="contact-columns">
           <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            ref={info.ref}
+            animate={info.animate}
+            variants={infoVariants}
             className="contact-info"
           >
             <div className="contact-card-premium">
@@ -231,10 +251,9 @@ export default function ContactSection() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            ref={formContainer.ref}
+            animate={formContainer.animate}
+            variants={formVariants}
             className="contact-container"
           >
             {status === 'success' ? (

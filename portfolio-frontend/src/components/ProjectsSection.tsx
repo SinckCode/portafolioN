@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import staticProjects from '@/data/projects';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { Project } from '@/types';
 import { api } from '@/lib/api';
 import FilterPanel from './FilterPanel';
@@ -68,14 +69,18 @@ export default function ProjectsSection() {
 
   const hasActiveFilters = selectedTechs.length > 0 || searchQuery.trim() !== '' || showOnlyWithDemo || sortOrder !== 'newest';
 
+  const header = useScrollReveal({ once: true });
+
   return (
     <section id="portfolio" className="section">
       <div className="section__container" style={{ maxWidth: '80rem' }}>
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
-          viewport={{ once: true }}
+          ref={header.ref}
+          animate={header.animate}
+          variants={{
+            hidden: { opacity: 0, y: 40 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.7 } },
+          }}
           className="section__header"
         >
           <h2 className="section__title">Mi trayectoria en codigo</h2>

@@ -7,6 +7,11 @@ import { Project } from '@/types';
 
 // Hero premium (port de la SPA): badge de disponibilidad, nombre con
 // gradiente cyan, rol rotatorio, stats reales del API y CTAs duales.
+//
+// SEO: initial={false} en el container para que el SSR renderice con
+// opacity:1 (sin eso, framer-motion inyecta opacity:0 inline y Google
+// puede ignorar el contenido).  La animación de entrada queda cubierta
+// por el Preloader, así que el usuario no nota la diferencia.
 
 const ROLES = ['Full Stack', 'DevOps', 'Infraestructura'];
 const CODING_SINCE = 2021;
@@ -29,16 +34,15 @@ const item = {
   },
 };
 
-interface HeroSectionProps {
-  modelState?: 'loading' | 'ready' | 'error';
-}
-
-export default function HeroSection({ modelState = 'ready' }: HeroSectionProps) {
+export default function HeroSection() {
   const reduceMotion = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
   const [roleIndex, setRoleIndex] = useState(0);
   const [stats, setStats] = useState(FALLBACK_STATS);
 
   const yearsCoding = new Date().getFullYear() - CODING_SINCE;
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     api
@@ -73,9 +77,10 @@ export default function HeroSection({ modelState = 'ready' }: HeroSectionProps) 
       <motion.div
         className="hero-content"
         variants={container}
-        initial="hidden"
-        // La entrada espera a que el modelo 3D cargue (o falle)
-        animate={modelState !== 'loading' ? 'visible' : 'hidden'}
+        // initial={false} → SSR renderiza en estado "visible" (opacity:1).
+        // La animación de entrada ya no se ve porque el Preloader la cubre.
+        initial={false}
+        animate="visible"
       >
         <motion.span className="hero-badge" variants={item}>
           <span className="hero-badge__dot" aria-hidden="true" />
@@ -93,7 +98,7 @@ export default function HeroSection({ modelState = 'ready' }: HeroSectionProps) 
               <motion.span
                 key={ROLES[roleIndex]}
                 className="hero-role"
-                initial={{ opacity: 0, y: 14 }}
+                initial={mounted ? { opacity: 0, y: 14 } : false}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -14 }}
                 transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}

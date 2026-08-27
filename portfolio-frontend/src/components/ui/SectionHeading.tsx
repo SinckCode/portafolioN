@@ -1,10 +1,14 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 // Encabezado estándar de sección: kicker mono cyan + título display +
 // subtítulo opcional + subrayado gradiente. Port del rediseño de la SPA.
 // Estilos: .section-heading__* en globals.scss.
+//
+// SEO: useScrollReveal → SSR sin opacity:0 inline; el contenido es
+// visible para Google sin ejecutar JS.
 
 interface SectionHeadingProps {
   kicker?: string;
@@ -13,9 +17,6 @@ interface SectionHeadingProps {
   align?: 'center' | 'left';
 }
 
-// Variants deterministas (sin useReducedMotion) para evitar
-// divergencia de hidratación SSR/cliente; el reduce-motion global
-// lo cubre el CSS.
 const variants = {
   hidden: { opacity: 0, y: 24 },
   visible: {
@@ -31,13 +32,13 @@ const SectionHeading = ({
   subtitle,
   align = 'center',
 }: SectionHeadingProps) => {
+  const { ref, animate } = useScrollReveal({ once: true, amount: 0.5 });
 
   return (
     <motion.header
+      ref={ref}
       className={`section-heading section-heading--${align}`}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.5 }}
+      animate={animate}
       variants={variants}
     >
       {kicker && <span className="section-heading__kicker">{kicker}</span>}

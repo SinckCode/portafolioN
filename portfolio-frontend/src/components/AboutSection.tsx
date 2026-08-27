@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Icon from '@/components/ui/Icon';
 import SectionHeading from '@/components/ui/SectionHeading';
 import { getTechColor } from '@/lib/techColors';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 // About premium (port de la SPA): avatar en card glass con borde animado,
 // bio en 2 columnas, specialty cards con SVG y strip de stack.
@@ -71,7 +72,20 @@ const item = {
   },
 };
 
+const stackVariants = {
+  hidden: { opacity: 0, y: 24 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as const },
+  },
+};
+
 export default function AboutSection() {
+  const grid = useScrollReveal({ once: true, amount: 0.2 });
+  const spec = useScrollReveal({ once: true, amount: 0.15 });
+  const stack = useScrollReveal({ once: true, amount: 0.4 });
+
   return (
     <section id="about" className="about-section">
       <div className="about-inner">
@@ -82,11 +96,10 @@ export default function AboutSection() {
         />
 
         <motion.div
+          ref={grid.ref}
           className="about-grid"
           variants={container}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
+          animate={grid.animate}
         >
           <motion.div className="about-avatar-col" variants={item}>
             <div className="avatar-card">
@@ -128,34 +141,32 @@ export default function AboutSection() {
         </motion.div>
 
         <motion.div
+          ref={spec.ref}
           className="about-specialties"
           variants={container}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.15 }}
+          animate={spec.animate}
         >
           <motion.h3 className="about-subtitle" variants={item}>
             Áreas de especialización
           </motion.h3>
           <div className="specialty-grid">
-            {SPECIALTIES.map((spec) => (
-              <motion.article key={spec.title} className="specialty-card-premium" variants={item}>
+            {SPECIALTIES.map((s) => (
+              <motion.article key={s.title} className="specialty-card-premium" variants={item}>
                 <span className="specialty-card-premium__icon" aria-hidden="true">
-                  <Icon name={spec.icon} size={22} strokeWidth={1.75} />
+                  <Icon name={s.icon} size={22} strokeWidth={1.75} />
                 </span>
-                <h4>{spec.title}</h4>
-                <p>{spec.description}</p>
+                <h4>{s.title}</h4>
+                <p>{s.description}</p>
               </motion.article>
             ))}
           </div>
         </motion.div>
 
         <motion.div
+          ref={stack.ref}
           className="about-stack"
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.4 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          variants={stackVariants}
+          animate={stack.animate}
         >
           <span className="about-stack__label">Stack principal</span>
           <div className="about-stack__chips">

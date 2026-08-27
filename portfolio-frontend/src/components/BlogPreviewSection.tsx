@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import Icon from '@/components/ui/Icon';
 import SectionHeading from '@/components/ui/SectionHeading';
 import { api } from '@/lib/api';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 // Preview del blog en el home (diseño de la SPA + posts del CMS):
 // 1 destacado + grid, con rama "Próximamente" si no hay publicados.
@@ -71,6 +72,7 @@ const PostCover = ({ post, className }: { post: PostPreview; className: string }
 export default function BlogPreviewSection() {
   const [posts, setPosts] = useState<PostPreview[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const layout = useScrollReveal({ once: true, amount: 0.1 });
 
   useEffect(() => {
     api
@@ -117,11 +119,10 @@ export default function BlogPreviewSection() {
         ) : (
           featured && (
             <motion.div
+              ref={layout.ref}
               className="blog-layout"
               variants={container}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.1 }}
+              animate={layout.animate}
             >
               <motion.article className="blog-featured" variants={item}>
                 <Link href={`/blog/${featured.slug}`} className="blog-featured__link">
