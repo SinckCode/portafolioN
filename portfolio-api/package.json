@@ -17,6 +17,8 @@
     "test:cov": "jest --coverage",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed": "ts-node -r tsconfig-paths/register src/seeds/seed.ts",
+    "seed:projects": "ts-node -r tsconfig-paths/register src/seeds/seed.ts --only=projects",
+    "projects:sync-fallback": "node scripts/sync-project-details.js",
     "posts:sync": "node scripts/sync-posts.js",
     "posts:sync:dry": "node scripts/sync-posts.js --dry-run"
   },

@@ -3,30 +3,97 @@ import { AppModule } from '../app.module';
 import { getModelToken } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+/**
+ * Las descripciones largas viven en content/projects.json, no aqui: son texto
+ * editable que no tiene por que estar enterrado en lineas de 2000 caracteres.
+ * El generador del fallback del frontend lee ese mismo archivo, asi que hay
+ * una sola fuente y no pueden divergir.
+ */
+function cargarDetalles(): Record<string, { details: string }> {
+  const ruta = join(__dirname, '..', '..', 'content', 'projects.json');
+  const crudo = JSON.parse(readFileSync(ruta, 'utf8')) as Record<string, unknown>;
+  const salida: Record<string, { details: string }> = {};
+  for (const [slug, valor] of Object.entries(crudo)) {
+    if (slug.startsWith('_')) continue;
+    salida[slug] = valor as { details: string };
+  }
+  return salida;
+}
+
+const ALL_SECTIONS = [
+  'users',
+  'categories',
+  'projects',
+  'services',
+  'courses',
+  'posts',
+  'site-config',
+] as const;
+
+type Section = (typeof ALL_SECTIONS)[number];
+
+/**
+ * Permite sembrar solo una parte: `npm run seed -- --only=projects`.
+ *
+ * Existe porque correr el seed completo contra produccion sobrescribe los
+ * articulos del blog con las versiones viejas que viven aqui, y esos se
+ * publican desde content/posts/*.md con `npm run posts:sync`. Sin este filtro,
+ * arreglar los proyectos costaba pisar el contenido real.
+ */
+function parseSections(argv: string[]): Set<Section> {
+  const flag = argv.find((arg) => arg.startsWith('--only='));
+  if (!flag) return new Set(ALL_SECTIONS);
+
+  const requested = flag
+    .slice('--only='.length)
+    .split(',')
+    .map((name) => name.trim())
+    .filter(Boolean);
+
+  const invalid = requested.filter(
+    (name) => !ALL_SECTIONS.includes(name as Section),
+  );
+  if (invalid.length > 0) {
+    throw new Error(
+      `Seccion desconocida: ${invalid.join(', ')}. Validas: ${ALL_SECTIONS.join(', ')}`,
+    );
+  }
+  return new Set(requested as Section[]);
+}
 
 async function seed() {
+  const sections = parseSections(process.argv.slice(2));
+  const shouldSeed = (section: Section) => sections.has(section);
+
   const adminPassword = process.env.SEED_ADMIN_PASSWORD;
-  if (!adminPassword) {
-    throw new Error('SEED_ADMIN_PASSWORD env var is required to run the seed');
+  if (shouldSeed('users') && !adminPassword) {
+    throw new Error('SEED_ADMIN_PASSWORD env var is required to seed the admin user');
   }
+
+  console.log(`Sembrando: ${Array.from(sections).join(', ')}`);
 
   const app = await NestFactory.createApplicationContext(AppModule);
 
   // Seed admin user
   const userModel = app.get<Model<any>>(getModelToken('User'));
-  const existingAdmin = await userModel.findOne({ email: 'admin@angelonesto.com' });
-  if (!existingAdmin) {
-    await userModel.create({
-      email: 'admin@angelonesto.com',
-      passwordHash: await bcrypt.hash(adminPassword, 12),
-      name: 'Angel Onesto',
-      role: 'admin',
-      isVerified: true,
-      avatar: '/images/avatar.webp',
-    });
-    console.log('Admin user created');
-  } else {
-    console.log('Admin user already exists');
+  if (shouldSeed('users')) {
+    const existingAdmin = await userModel.findOne({ email: 'admin@angelonesto.com' });
+    if (!existingAdmin) {
+      await userModel.create({
+        email: 'admin@angelonesto.com',
+        passwordHash: await bcrypt.hash(adminPassword as string, 12),
+        name: 'Angel Onesto',
+        role: 'admin',
+        isVerified: true,
+        avatar: '/images/avatar.webp',
+      });
+      console.log('Admin user created');
+    } else {
+      console.log('Admin user already exists');
+    }
   }
 
   // Seed categories
@@ -45,10 +112,12 @@ async function seed() {
     { name: 'IoT', slug: 'iot-curso', description: 'Cursos de IoT y hardware', type: 'course' },
   ];
 
-  for (const cat of categories) {
-    await categoryModel.updateOne({ slug: cat.slug }, { $set: cat }, { upsert: true });
+  if (shouldSeed('categories')) {
+    for (const cat of categories) {
+      await categoryModel.updateOne({ slug: cat.slug }, { $set: cat }, { upsert: true });
+    }
+    console.log(`${categories.length} categories seeded`);
   }
-  console.log(`${categories.length} categories seeded`);
 
   // Seed projects (datos completos alineados con portfolio-frontend/src/data/projects.ts)
   const projectModel = app.get<Model<any>>(getModelToken('Project'));
@@ -72,10 +141,20 @@ async function seed() {
     { title: 'MyGameShelf', slug: 'mygameshelf', description: 'App Android con Jetpack Compose que consume API propia para gestionar videojuegos.', details: 'MyGameShelf es una aplicacion Android con Jetpack Compose y API propia en Vapor.', technologies: ['Android', 'Jetpack Compose', 'Kotlin', 'MVVM', 'Vapor (Swift)', 'Proxmox'], type: 'Mobile / Fullstack', date: '2025-11-25', featured: true, order: 17, images: Array.from({ length: 12 }, (_, i) => `/projects/MyGameShelf/MyGameShelf${i + 1}.png`), repos: { frontend: 'https://github.com/SinckCode/MyGameShelf', backend: 'https://github.com/SinckCode/MyGameShelfApi' }, api: 'https://mygameshelf.angelonesto.com/', video: '/projects/MyGameShelf/MyGameShelfV.mp4' },
   ];
 
-  for (const proj of projects) {
-    await projectModel.updateOne({ slug: proj.slug }, { $set: proj }, { upsert: true });
+  if (shouldSeed('projects')) {
+    const detalles = cargarDetalles();
+    const faltantes = projects.filter((p) => !detalles[p.slug]).map((p) => p.slug);
+    if (faltantes.length > 0) {
+      throw new Error(
+        `content/projects.json no tiene descripcion para: ${faltantes.join(', ')}`,
+      );
+    }
+    for (const proj of projects) {
+      const completo = { ...proj, details: detalles[proj.slug].details };
+      await projectModel.updateOne({ slug: proj.slug }, { $set: completo }, { upsert: true });
+    }
+    console.log(`${projects.length} projects seeded (descripciones desde content/projects.json)`);
   }
-  console.log(`${projects.length} projects seeded`);
 
   // Seed services (mismo contenido que la SPA src/services.js)
   const serviceModel = app.get<Model<any>>(getModelToken('Service'));
@@ -88,10 +167,12 @@ async function seed() {
     { title: 'IoT e Integración de Hardware', slug: 'iot-e-integracion-de-hardware', icon: 'cpu', tagline: 'Del sensor a la nube', description: 'Sensores y microcontroladores conectados a dashboards y servicios web en tiempo real.', deliverables: ['Firmware para ESP32 / Arduino', 'API de ingesta de datos', 'Dashboard en tiempo real', 'Alertas y automatización'], stack: ['ESP32', 'Arduino', 'Node.js', 'MongoDB'], startingPrice: null, ctaLabel: 'Cotizar proyecto', order: 6, status: 'active' },
   ];
 
-  for (const svc of services) {
-    await serviceModel.updateOne({ slug: svc.slug }, { $set: svc }, { upsert: true });
+  if (shouldSeed('services')) {
+    for (const svc of services) {
+      await serviceModel.updateOne({ slug: svc.slug }, { $set: svc }, { upsert: true });
+    }
+    console.log(`${services.length} services seeded`);
   }
-  console.log(`${services.length} services seeded`);
 
   // Seed example courses
   const courseModel = app.get<Model<any>>(getModelToken('Course'));
@@ -203,10 +284,12 @@ async function seed() {
     },
   ];
 
-  for (const course of courses) {
-    await courseModel.updateOne({ slug: course.slug }, { $set: course }, { upsert: true });
+  if (shouldSeed('courses')) {
+    for (const course of courses) {
+      await courseModel.updateOne({ slug: course.slug }, { $set: course }, { upsert: true });
+    }
+    console.log(`${courses.length} courses seeded`);
   }
-  console.log(`${courses.length} courses seeded`);
 
   // Seed blog posts (contenido portado de la SPA src/blog.js, en markdown)
   const postModel = app.get<Model<any>>(getModelToken('Post'));
@@ -281,38 +364,44 @@ async function seed() {
     },
   ];
 
-  for (const post of posts) {
-    await postModel.updateOne({ slug: post.slug }, { $set: post }, { upsert: true });
+  // OJO: el contenido real de los articulos vive en content/posts/*.md y se
+  // publica con `npm run posts:sync`. Sembrar posts aqui pisa ese contenido.
+  if (shouldSeed('posts')) {
+    for (const post of posts) {
+      await postModel.updateOne({ slug: post.slug }, { $set: post }, { upsert: true });
+    }
+    console.log(`${posts.length} posts seeded`);
   }
-  console.log(`${posts.length} posts seeded`);
 
-  // Seed site config
-  const siteConfigModel = app.get<Model<any>>(getModelToken('SiteConfig'));
-  await siteConfigModel.updateOne(
-    { key: 'main' },
-    {
-      $set: {
-        key: 'main',
-        siteName: 'Angel Onesto Portfolio',
-        siteDescription: 'Portfolio de Angel David Onesto Frias - Full Stack Developer',
-        ownerName: 'Angel David Onesto Frias',
-        ownerEmail: 'contacto@angelonesto.com',
-        ownerBio: 'Full Stack Developer apasionado por la tecnologia, infraestructura y crear experiencias web unicas.',
-        socialLinks: {
-          github: 'https://github.com/SinckCode',
-          linkedin: 'https://linkedin.com/in/angelonesto',
-        },
-        hero: {
-          title: 'Angel Onesto',
-          subtitle: 'Full Stack Developer',
-          ctaText: 'Ver Proyectos',
-          ctaLink: '#projects',
+  if (shouldSeed('site-config')) {
+    // Seed site config
+    const siteConfigModel = app.get<Model<any>>(getModelToken('SiteConfig'));
+    await siteConfigModel.updateOne(
+      { key: 'main' },
+      {
+        $set: {
+          key: 'main',
+          siteName: 'Angel Onesto Portfolio',
+          siteDescription: 'Portfolio de Angel David Onesto Frias - Full Stack Developer',
+          ownerName: 'Angel David Onesto Frias',
+          ownerEmail: 'contacto@angelonesto.com',
+          ownerBio: 'Full Stack Developer apasionado por la tecnologia, infraestructura y crear experiencias web unicas.',
+          socialLinks: {
+            github: 'https://github.com/SinckCode',
+            linkedin: 'https://linkedin.com/in/angelonesto',
+          },
+          hero: {
+            title: 'Angel Onesto',
+            subtitle: 'Full Stack Developer',
+            ctaText: 'Ver Proyectos',
+            ctaLink: '#projects',
+          },
         },
       },
-    },
-    { upsert: true },
-  );
-  console.log('Site config seeded');
+      { upsert: true },
+    );
+    console.log('Site config seeded');
+  }
 
   await app.close();
   console.log('Seed completed successfully');
