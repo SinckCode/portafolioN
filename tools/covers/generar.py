@@ -276,6 +276,50 @@ POSTS = [
         'titulo': 'Monté un portal de tours 360 para Oculus en mi propio servidor',
         'categoria': 'tutorial',
     },
+    {
+        'slug': 'cloudflare-tunnel-sin-abrir-puertos',
+        'titulo': 'Cloudflare Tunnel: publicar tu homelab sin abrir un solo puerto',
+        'categoria': 'infraestructura',
+        'terminal': [
+            ('# el modelo de siempre:', TEXTO_SUAVE),
+            ('  internet  ->  puerto abierto  ->  tu red', ROJO),
+            ('', TEXTO_SUAVE),
+            ('# con el tunel, la conexion sale desde dentro:', TEXTO_SUAVE),
+            ('  tu VM  ->  (saliente)  ->  Cloudflare  ->  visitante', PRIMARIO),
+            ('  reglas de entrada en el router:  0', PRIMARIO),
+        ],
+    },
+    {
+        'slug': 'deploy-docker-github-actions',
+        'titulo': 'CI/CD con GitHub Actions contra tu propio servidor, sin exponer SSH',
+        'categoria': 'devops',
+        'terminal': [
+            ('# lo que casi todos los tutoriales piden:', TEXTO_SUAVE),
+            ('  secrets.SSH_PRIVATE_KEY   ->  shell en tu servidor', ROJO),
+            ('', TEXTO_SUAVE),
+            ('# lo que uso en su lugar:', TEXTO_SUAVE),
+            ('  POST /deploy/<proyecto>', PRIMARIO),
+            ('  Authorization: Bearer <token revocable>', PRIMARIO),
+        ],
+    },
+    {
+        'slug': 'mi-homelab-con-proxmox-aprender-infraestructura-rompiendo-cosas-en-casa',
+        'titulo': 'Mi homelab con Proxmox: aprender infraestructura rompiendo cosas',
+        'categoria': 'tutorial',
+        'terminal': [
+            ('$ pvecm status', TEXTO_SUAVE),
+            ('  cluster:  2 nodos', TEXTO),
+            ('  quorum:   OK', TEXTO),
+            ('', TEXTO_SUAVE),
+            ('# red segmentada por funcion, no plana:', TEXTO_SUAVE),
+            ('  OPNsense enrutando 4 subredes', PRIMARIO),
+        ],
+    },
+    {
+        'slug': '17-proyectos-como-estudiante',
+        'titulo': 'Lo que aprendí construyendo 17 proyectos como estudiante',
+        'categoria': 'reflexión',
+    },
 ]
 
 

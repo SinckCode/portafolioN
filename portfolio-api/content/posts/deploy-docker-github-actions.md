@@ -6,6 +6,7 @@ tags: ["DevOps", "CI/CD", "GitHub Actions", "Docker", "PM2", "Deploy"]
 status: published
 publishedAt: 2026-07-10
 contentFormat: markdown
+coverImage: /covers/deploy-docker-github-actions.png
 excerpt: "Mi pipeline real: del push a main a producción en tres minutos, sin dar credenciales SSH a GitHub y con health check que detecta un deploy roto."
 metaTitle: "CI/CD con GitHub Actions a tu propio servidor sin exponer SSH"
 metaDescription: "Cómo despliego a un servidor propio desde GitHub Actions sin entregar llaves SSH: una deploy API con token, PM2, health checks y los errores que me costaron horas."

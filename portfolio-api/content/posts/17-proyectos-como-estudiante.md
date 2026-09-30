@@ -6,6 +6,7 @@ tags: ["Carrera", "Aprendizaje", "Full Stack", "Estudiantes", "Portafolio"]
 status: published
 publishedAt: 2026-06-02
 contentFormat: markdown
+coverImage: /covers/17-proyectos-como-estudiante.png
 excerpt: "Ninguna clase me enseñó tanto como terminar proyectos reales. Estas son las lecciones concretas que me dejaron 17 proyectos, incluidos los que salieron mal."
 metaTitle: "17 proyectos como estudiante: lo que aprendí construyendo"
 metaDescription: "Lecciones reales de construir 17 proyectos entre prepa y universidad: webs, APIs, apps de escritorio e IoT con ESP32. Qué funcionó, qué no, y cómo elegir tecnología."

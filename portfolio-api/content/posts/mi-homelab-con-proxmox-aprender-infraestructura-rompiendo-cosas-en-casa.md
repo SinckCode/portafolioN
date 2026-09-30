@@ -6,6 +6,7 @@ tags: ["Infraestructura", "Proxmox", "Homelab", "Virtualización", "Redes", "OPN
 status: published
 publishedAt: 2026-06-15
 contentFormat: markdown
+coverImage: /covers/mi-homelab-con-proxmox-aprender-infraestructura-rompiendo-cosas-en-casa.png
 excerpt: "Dos nodos Proxmox, un firewall OPNsense y tres VLANs segmentadas en mi casa. Lo que aprendí montando (y rompiendo) infraestructura real."
 metaTitle: "Homelab con Proxmox: cómo monté un cluster con VLANs y OPNsense"
 metaDescription: "Mi homelab real con Proxmox VE: dos nodos en cluster, firewall OPNsense, tres VLANs segmentadas, VLAN trunking y storage compartido. Qué aprendí y qué haría distinto."

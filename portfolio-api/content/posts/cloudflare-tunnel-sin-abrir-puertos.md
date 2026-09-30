@@ -6,6 +6,7 @@ tags: ["Cloudflare", "Homelab", "Infraestructura", "Seguridad", "Self-hosting"]
 status: published
 publishedAt: 2026-08-27
 contentFormat: markdown
+coverImage: /covers/cloudflare-tunnel-sin-abrir-puertos.png
 excerpt: "Cómo expongo las apps de mi servidor casero con dominio propio y HTTPS sin tocar el router, sin IP fija y sin abrir puertos al mundo."
 metaTitle: "Cloudflare Tunnel: expón tu homelab sin abrir puertos (guía real)"
 metaDescription: "Guía práctica de Cloudflare Tunnel: instalar cloudflared, escribir el ingress, correrlo como servicio y publicar varias apps con HTTPS sin abrir puertos ni tener IP fija."
