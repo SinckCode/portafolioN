@@ -5,25 +5,24 @@ import {
   IsBoolean,
   IsNumber,
   IsDateString,
+  IsEmail,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsStringRecord,
+  IsStringOrStringRecord,
+} from '@/common/validators/string-record.validator';
 
-class RepoLinkDto {
-  @IsString()
-  label!: string;
+class CredentialsDto {
+  @ApiProperty()
+  @IsEmail()
+  email!: string;
 
+  @ApiProperty()
   @IsString()
-  url!: string;
-}
-
-class DemoLinkDto {
-  @IsString()
-  label!: string;
-
-  @IsString()
-  url!: string;
+  password!: string;
 }
 
 export class CreateProjectDto {
@@ -61,26 +60,30 @@ export class CreateProjectDto {
   @IsDateString()
   date?: string;
 
-  @ApiPropertyOptional()
+  // Mapa de etiqueta -> URL: { frontend, backend, hardware, deploy }.
+  // Debe coincidir con `repos: { type: Object }` del schema; declararlo como
+  // array de { label, url } fue lo que destruyo los links de los 17 proyectos.
+  @ApiPropertyOptional({
+    type: 'object',
+    additionalProperties: { type: 'string' },
+    example: { frontend: 'https://github.com/usuario/repo' },
+  })
   @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => RepoLinkDto)
-  repos?: RepoLinkDto[];
+  @IsStringRecord()
+  repos?: Record<string, string>;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   demo?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: [String] })
   @IsOptional()
   @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => DemoLinkDto)
-  demos?: DemoLinkDto[];
+  @IsString({ each: true })
+  demos?: string[];
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: [String] })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -88,9 +91,31 @@ export class CreateProjectDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsString()
+  video?: string;
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   videos?: string[];
+
+  @ApiPropertyOptional({ type: CredentialsDto, nullable: true })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CredentialsDto)
+  credentials?: CredentialsDto | null;
+
+  @ApiPropertyOptional({
+    oneOf: [
+      { type: 'string' },
+      { type: 'object', additionalProperties: { type: 'string' } },
+    ],
+    nullable: true,
+  })
+  @IsOptional()
+  @IsStringOrStringRecord()
+  api?: string | Record<string, string> | null;
 
   @ApiPropertyOptional()
   @IsOptional()
