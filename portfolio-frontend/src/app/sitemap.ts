@@ -43,11 +43,13 @@ const conFecha = (valor?: string) => {
 };
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // La barra final del home tiene que coincidir con el canonical que emite
-  // page.tsx (`alternates: { canonical: '/' }` resuelve a BASE_URL + '/'), o
-  // volvemos a darle a Google dos formas de la misma URL sin desempate.
+  // El home va sin barra final para coincidir con el canonical que emite
+  // page.tsx: Next normaliza `alternates: { canonical: '/' }` a la raiz desnuda
+  // (`https://angelonesto.com`), no a `.../`. Para el root las dos formas son
+  // equivalentes, pero declarar la misma URL de dos maneras distintas en el
+  // sitemap y en el canonical solo invita a confusion.
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: `${BASE_URL}/`, changeFrequency: 'monthly', priority: 1 },
+    { url: BASE_URL, changeFrequency: 'monthly', priority: 1 },
     { url: `${BASE_URL}/portafolio`, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${BASE_URL}/blog`, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE_URL}/cursos`, changeFrequency: 'weekly', priority: 0.8 },
