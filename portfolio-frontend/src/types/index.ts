@@ -1,25 +1,24 @@
 export interface Project {
-  id: number;
+  /** Solo lo traen los datos estaticos; los documentos de Mongo usan `_id`. */
+  id?: number;
+  _id?: string;
   title: string;
   slug?: string;
   description: string;
   details: string;
   technologies: string[];
   type: string;
+  /** Normalizada a 'YYYY-MM-DD' por `normalizeProject`. */
   date: string;
-  repos: {
-    frontend?: string;
-    backend?: string;
-    hardware?: string;
-    deploy?: string;
-  };
+  /** Mapa de etiqueta -> URL: frontend, backend, hardware, deploy... */
+  repos: Record<string, string>;
   demo?: string;
   demos?: string[];
   video?: string;
   videos?: string[];
   images: string[];
-  api?: string | { videojuegos?: string; empresas?: string };
-  credentials?: { email: string; password: string };
+  api?: string | Record<string, string> | null;
+  credentials?: { email: string; password: string } | null;
   featured?: boolean;
   category?: string;
 }

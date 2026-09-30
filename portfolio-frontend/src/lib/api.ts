@@ -1,3 +1,5 @@
+import { unwrap, unwrapList } from './envelope';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 interface FetchOptions extends RequestInit {
@@ -34,10 +36,9 @@ async function tryRefreshToken(): Promise<string> {
 
     if (!res.ok) throw new Error('Refresh failed');
 
-    const json = await res.json();
-    const data = json.data !== undefined ? json.data : json;
-    const newAccessToken: string = data.accessToken;
-    const newRefreshToken: string | undefined = data.refreshToken;
+    const data = unwrap<{ accessToken: string; refreshToken?: string }>(await res.json());
+    const newAccessToken = data.accessToken;
+    const newRefreshToken = data.refreshToken;
 
     localStorage.setItem('accessToken', newAccessToken);
     if (newRefreshToken) localStorage.setItem('refreshToken', newRefreshToken);
@@ -89,8 +90,7 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
     throw new Error(error.message || `HTTP ${res.status}`);
   }
 
-  const json = await res.json();
-  return json.data !== undefined ? json.data : json;
+  return unwrap<T>(await res.json());
 }
 
 export const api = {
@@ -381,17 +381,8 @@ export const api = {
 
 /**
  * Normaliza la respuesta de un endpoint de listado a un array.
- *
- * fetchApi() ya desenvuelve el envelope { data: ... } del API, asi que lo
- * que llega aqui normalmente ya es el array. El caso `.data` queda como
- * red de seguridad por si algun endpoint devuelve el envelope sin
- * desenvolver. Hacer `(data as { data: T[] }).data || []` sobre un array
- * ya desenvuelto daba siempre [] — era la causa de secciones vacias.
+ * Alias de `unwrapList` para los componentes que ya lo importaban.
  */
-export function toList<T>(data: unknown): T[] {
-  if (Array.isArray(data)) return data as T[];
-  const inner = (data as { data?: unknown } | null)?.data;
-  return Array.isArray(inner) ? (inner as T[]) : [];
-}
+export const toList = unwrapList;
 
 export default api;

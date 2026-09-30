@@ -5,6 +5,7 @@ import '@fontsource-variable/jetbrains-mono';
 import { AuthProvider } from '@/context/AuthContext';
 import './globals.scss';
 import './premium.scss';
+import './portafolio.scss';
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://angelonesto.com'),

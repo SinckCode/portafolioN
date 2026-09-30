@@ -1,74 +1,23 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
-import staticProjects from '@/data/projects';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { Project } from '@/types';
-import { api } from '@/lib/api';
-import FilterPanel from './FilterPanel';
+import { projectKey } from '@/lib/projectFilters';
 import ProjectCard from './ProjectCard';
-import ProjectModal from './ProjectModal';
 
-export default function ProjectsSection() {
-  const [projects, setProjects] = useState<Project[]>(staticProjects);
-  const [selectedTechs, setSelectedTechs] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
-  const [activeProject, setActiveProject] = useState<Project | null>(null);
-  const [showOnlyWithDemo, setShowOnlyWithDemo] = useState(false);
+// Sección de proyectos del home. Recibe los proyectos ya resueltos desde el
+// servidor: antes los pedía en un useEffect, así que el HTML que veía Googlebot
+// no tenía ni un enlace a /portafolio/<slug>. Sigue siendo cliente solo por la
+// animación de entrada, que no afecta al HTML renderizado.
 
-  useEffect(() => {
-    api.getProjects()
-      .then((data) => {
-        const items = (data as { data: Project[] }).data || data as Project[];
-        if (items.length > 0) setProjects(items);
-      })
-      .catch(() => {});
-  }, []);
+interface ProjectsSectionProps {
+  projects: Project[];
+  totalCount: number;
+}
 
-  const allTechs = useMemo(() => {
-    const techSet = new Set<string>();
-    projects.forEach((p) => p.technologies.forEach((t) => techSet.add(t)));
-    return Array.from(techSet).sort();
-  }, [projects]);
-
-  const filteredProjects = useMemo(() => {
-    let result = [...projects];
-    if (selectedTechs.length > 0) {
-      result = result.filter((p) => selectedTechs.every((tech) => p.technologies.includes(tech)));
-    }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter((p) =>
-        p.title.toLowerCase().includes(q) || p.details.toLowerCase().includes(q) ||
-        p.technologies.some((t) => t.toLowerCase().includes(q))
-      );
-    }
-    if (showOnlyWithDemo) {
-      result = result.filter((p) => p.demo || (p.demos && p.demos.length > 0));
-    }
-    result.sort((a, b) => {
-      const dateA = new Date(a.date).getTime();
-      const dateB = new Date(b.date).getTime();
-      return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
-    });
-    return result;
-  }, [selectedTechs, searchQuery, sortOrder, showOnlyWithDemo]);
-
-  const toggleTech = (tech: string) => {
-    setSelectedTechs((prev) => prev.includes(tech) ? prev.filter((t) => t !== tech) : [...prev, tech]);
-  };
-
-  const clearFilters = () => {
-    setSelectedTechs([]);
-    setSearchQuery('');
-    setSortOrder('newest');
-    setShowOnlyWithDemo(false);
-  };
-
-  const hasActiveFilters = selectedTechs.length > 0 || searchQuery.trim() !== '' || showOnlyWithDemo || sortOrder !== 'newest';
-
+export default function ProjectsSection({ projects, totalCount }: ProjectsSectionProps) {
   const header = useScrollReveal({ once: true });
 
   return (
@@ -90,27 +39,17 @@ export default function ProjectsSection() {
           </p>
         </motion.div>
 
-        <FilterPanel
-          allTechs={allTechs} selectedTechs={selectedTechs} onToggleTech={toggleTech}
-          searchQuery={searchQuery} onSearchChange={setSearchQuery}
-          sortOrder={sortOrder} onSortChange={setSortOrder}
-          showOnlyWithDemo={showOnlyWithDemo} onDemoFilterChange={setShowOnlyWithDemo}
-          onClearFilters={clearFilters} hasActiveFilters={hasActiveFilters}
-        />
+        <div className="pf__grid">
+          {projects.map((project, i) => (
+            <ProjectCard key={projectKey(project)} project={project} destacada={i === 0} />
+          ))}
+        </div>
 
-        {filteredProjects.length === 0 ? (
-          <div className="empty-state">
-            <p className="empty-state__text">No se encontraron proyectos con los filtros seleccionados.</p>
-          </div>
-        ) : (
-          <div className="projects-grid">
-            {filteredProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} onClick={() => setActiveProject(project)} />
-            ))}
-          </div>
-        )}
-
-        {activeProject && <ProjectModal project={activeProject} onClose={() => setActiveProject(null)} />}
+        <div className="section__footer">
+          <Link href="/portafolio" className="btn btn--ghost">
+            Ver los {totalCount} proyectos
+          </Link>
+        </div>
       </div>
     </section>
   );

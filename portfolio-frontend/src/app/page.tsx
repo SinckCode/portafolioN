@@ -9,6 +9,11 @@ import Footer from '@/components/Footer';
 import DotNavigation from '@/components/DotNavigation';
 import HomeCanvas from '@/components/HomeCanvas';
 import ScrollProgress from '@/components/ScrollProgress';
+import { getAllProjects, pickFeatured } from '@/lib/projects';
+
+// Cuantos proyectos se muestran en el home. El catalogo completo, con filtros,
+// vive en /portafolio; subir esto a 17 replica el comportamiento anterior.
+const HOME_PROJECT_COUNT = 6;
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -33,7 +38,10 @@ const jsonLd = {
   ],
 };
 
-export default function Home() {
+export default async function Home() {
+  const projects = await getAllProjects();
+  const featured = pickFeatured(projects, HOME_PROJECT_COUNT);
+
   return (
     <>
       <script
@@ -48,7 +56,7 @@ export default function Home() {
         <HeroSection />
         <AboutSection />
         <ServicesSection />
-        <ProjectsSection />
+        <ProjectsSection projects={featured} totalCount={projects.length} />
         <BlogPreviewSection />
         <ContactSection />
       </main>
