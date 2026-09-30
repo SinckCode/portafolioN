@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import emailjs from '@emailjs/browser';
+import ContactAccountCTA from './ContactAccountCTA';
 import Icon from '@/components/ui/Icon';
 import SectionHeading from '@/components/ui/SectionHeading';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
@@ -350,6 +351,8 @@ export default function ContactSection() {
                 </div>
               </form>
             )}
+
+            <ContactAccountCTA />
           </motion.div>
         </div>
       </div>

@@ -2967,3 +2967,104 @@ a.project-card {
     }
   }
 }
+
+/* ── Contacto: segunda via por la mensajeria del sitio ───────────────────── */
+
+.contact-alt {
+  margin-top: 1.75rem;
+}
+
+/* Separador con la "o" centrada sobre la linea. */
+.contact-alt__divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.85rem;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.contact-alt__card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.35rem;
+  background: rgba(15, 17, 21, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 3px solid #00b4d8;
+  border-radius: 12px;
+}
+
+.contact-alt__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--color-primary-soft);
+  color: #00b4d8;
+}
+
+.contact-alt__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.contact-alt__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.contact-alt__text {
+  margin: 0;
+  font-size: 0.93rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.contact-alt__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 0.15rem;
+
+  /* Los CTA aqui son enlaces, no botones: .contact-button asume <button>. */
+  a.contact-button {
+    text-decoration: none;
+    padding: 0.7rem 1.35rem;
+    font-size: 0.93rem;
+  }
+}
+
+.contact-alt__note {
+  margin: 0;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+@media (max-width: 520px) {
+  .contact-alt__card {
+    flex-direction: column;
+  }
+
+  .contact-alt__actions a.contact-button {
+    width: 100%;
+  }
+}
