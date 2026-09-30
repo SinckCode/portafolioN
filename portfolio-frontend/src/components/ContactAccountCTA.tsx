@@ -111,11 +111,11 @@ export default function ContactAccountCTA() {
           ) : (
             <>
               <motion.h3 className="contact-alt__title" variants={lineaTextoVariants}>
-                Escríbeme desde el sitio
+                Escríbeme desde mi sitio
               </motion.h3>
               <motion.p className="contact-alt__text" variants={lineaTextoVariants}>
-                Con una cuenta hablamos en un hilo: ves cuándo leí tu mensaje y
-                puedes retomarlo cuando quieras.
+                Crea una cuenta y, mediante mi sistema de mensajería dentro de la
+                página, nos podemos contactar.
               </motion.p>
               <motion.div className="contact-alt__actions" variants={lineaTextoVariants}>
                 <Link href="/registro" className="contact-button">
