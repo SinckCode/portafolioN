@@ -287,7 +287,7 @@ const projects: Project[] = [
     featured: true,
     repos: { backend: 'https://github.com/SinckCode/deploy-api' },
     api: 'https://deploy.angelonesto.com/health',
-    images: [],
+    images: ['/projects/deploy-api/deploy-api1.png'],
   },
   {
     id: 19,
@@ -301,7 +301,21 @@ const projects: Project[] = [
     featured: true,
     repos: {},
     demo: 'https://vr.angelonesto.com',
-    images: [],
+    images: ['/projects/portal-vr-tours-360/portal-vr-tours-3601.png'],
+  },
+  {
+    id: 20,
+    title: 'EL BUCLE - experiencia inmersiva 360',
+    slug: 'el-bucle-360',
+    description: 'Cortometraje en video 360 para visores VR, renderizado en Blender.',
+    details: 'EL BUCLE es un cortometraje en video 360 grados para visores VR, renderizado en Blender. Found footage en estilo VHS: alguien avanza con una camcorder por una sucesion de habitaciones que no terminan, documentando su busqueda de la salida con el metodo ordenado de quien todavia cree que va a salir. Lo que la cinta registra, sin que el lo note, es otra cosa.\n\nTecnicamente son 110 segundos en seis bloques, renderizados en equirectangular de 8192 por 4096 con Cycles y OptiX, a 24 fps y con la camara a 1.6 metros del suelo. Es 3DoF: el espectador gira la cabeza pero no se desplaza, que es lo que permite publicarlo como video en YouTube VR y verlo con un simple enlace, sin instalar nada.\n\nEl detalle que mas tiempo me costo y que documente para no volver a perderlo es la orientacion de la camara. La equirectangular va en rotacion (90, 0, 0), y con eso el frente del espectador cae en el eje +Y, al centro del equirect. Lo verifique contra render en vez de asumirlo, porque en 360 una camara mal orientada no se nota hasta que alguien se pone el visor y descubre que la accion ocurre a sus espaldas.\n\nLo que mas me enseño el proyecto no fue Blender, sino que dirigir en 360 grados es otro oficio: no hay encuadre. El espectador mira a donde quiere, asi que las unicas herramientas que quedan para guiar la atencion son el sonido, la luz y el movimiento dentro de la escena. Una toma que funciona en plano se vuelve irrelevante cuando el publico esta mirando la pared de atras.\n\nEl repositorio publica las escenas, el montaje y la documentacion: guion, shotlist y la convencion de orientacion verificada. La escena inicial del lobby no es de mi autoria y por eso no esta incluida: aparece en el video acreditada a su autor, pero acreditar y redistribuir el archivo fuente son cosas distintas.',
+    technologies: ['Blender', 'Cycles', 'OptiX', 'Render 360', 'Realidad Virtual', 'Video'],
+    type: 'Realidad Virtual',
+    date: '2026-09-15',
+    featured: true,
+    repos: { proyecto: 'https://github.com/SinckCode/el-bucle-360' },
+    demo: 'https://www.youtube.com/watch?v=yh_TSr7Ep-k',
+    images: ['/projects/el-bucle-360/el-bucle-3601.png'],
   },
 ];
 

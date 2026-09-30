@@ -323,8 +323,87 @@ POSTS = [
 ]
 
 
+
+# --------------------------------------------------------- proyectos
+# Las portadas de proyecto van a public/projects/<slug>/, que es la convencion
+# que ya usa el portafolio, no a public/covers/ (eso es del blog).
+
+SALIDA_PROYECTOS = os.path.join(RAIZ, 'portfolio-frontend', 'public', 'projects')
+
+PROYECTOS = [
+    {
+        'slug': 'deploy-api',
+        'titulo': 'Deploy API',
+        'categoria': 'devops',
+        'terminal': [
+            ('$ POST /deploy/<proyecto>', TEXTO_SUAVE),
+            ('  OK  sync-repo   OK  deps   OK  build', TEXTO),
+            ('  OK  seed        OK  sync   OK  reload', TEXTO),
+            ('  verify 200', PRIMARIO),
+            ('', TEXTO_SUAVE),
+            ('8 proyectos · 3 maquinas · pipelines en JSON', PRIMARIO),
+        ],
+    },
+    {
+        'slug': 'portal-vr-tours-360',
+        'titulo': 'Portal VR de tours 360',
+        'categoria': 'realidad virtual',
+        'terminal': [
+            ('# un dominio, una carpeta por tour', TEXTO_SUAVE),
+            ('  vr.angelonesto.com/<tour>/', TEXTO),
+            ('', TEXTO_SUAVE),
+            ('krpano + nginx + Cloudflare Tunnel', PRIMARIO),
+            ('HTTPS obligatorio para el modo VR del Quest', TEXTO),
+            ('3DoF · publicar un tour = copiar una carpeta', PRIMARIO),
+        ],
+    },
+    {
+        'slug': 'el-bucle-360',
+        'titulo': 'EL BUCLE — experiencia inmersiva 360',
+        'categoria': 'realidad virtual',
+        'terminal': [
+            ('# render 360 equirectangular', TEXTO_SUAVE),
+            ('  8192 x 4096 · 24 fps · Cycles/OptiX', TEXTO),
+            ('  camara equirect en (90, 0, 0) · ojos a 1.6 m', TEXTO),
+            ('', TEXTO_SUAVE),
+            ('110 s · 6 bloques de 15 s · 5 niveles', PRIMARIO),
+            ('3DoF para YouTube VR · found footage', PRIMARIO),
+        ],
+    },
+]
+
+
+def generar_proyectos():
+    """Una imagen por proyecto, con el mismo lenguaje visual que el blog."""
+    for p in PROYECTOS:
+        carpeta = os.path.join(SALIDA_PROYECTOS, p['slug'])
+        os.makedirs(carpeta, exist_ok=True)
+        img, d = base()
+
+        alto_panel = 58 + 30 * len(p['terminal']) + 18
+        f_tit = fuente('SpaceGrotesk.ttf', 46)
+        lineas = envolver(p['titulo'], f_tit, ANCHO - MARGEN * 2, d)[:2]
+        y = MARGEN + 4
+        for ln in lineas:
+            d.text((MARGEN, y), ln, font=f_tit, fill=TEXTO)
+            y += 56
+        panel_terminal(d, p['terminal'], y + 18, alto_panel)
+        pie(d, p['categoria'])
+
+        destino = os.path.join(carpeta, '%s1.png' % p['slug'])
+        img.save(destino, 'PNG', optimize=True)
+        print('  %-44s %3d KB' % (
+            '/projects/%s/%s1.png' % (p['slug'], p['slug']),
+            os.path.getsize(destino) // 1024))
+
+
 def main():
     pedido = sys.argv[1] if len(sys.argv) > 1 else None
+
+    if pedido == 'proyectos':
+        generar_proyectos()
+        return 0
+
     hechas = 0
     for p in POSTS:
         if pedido and p['slug'] != pedido:
