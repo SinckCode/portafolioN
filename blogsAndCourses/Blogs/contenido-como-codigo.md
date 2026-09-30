@@ -6,6 +6,7 @@ tags: ["MongoDB", "NestJS", "Contenido", "Git", "Deploy", "Debugging"]
 status: published
 publishedAt: 2026-09-30
 contentFormat: markdown
+coverImage: /covers/contenido-como-codigo.png
 excerpt: "El fallback que puse para que la página nunca se viera vacía fue exactamente lo que escondió el bug durante meses. Así convertí el contenido en código versionado."
 metaTitle: "Contenido como código: git como fuente de verdad de tu CMS"
 metaDescription: "Un campo vacío en producción tapado por un fallback estático. Cómo publicar contenido versionado en git a la base en cada deploy, con upsert idempotente que preserva métricas."

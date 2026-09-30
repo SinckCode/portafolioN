@@ -6,6 +6,7 @@ tags: ["DevOps", "CI/CD", "Node.js", "Express", "Deploy", "GitHub Actions"]
 status: published
 publishedAt: 2026-09-30
 contentFormat: markdown
+coverImage: /covers/mi-propia-api-de-despliegue.png
 excerpt: "Tenía una mini-API de deploy copiada por cada proyecto, con los comandos dentro de un controller. La reemplacé por una sola donde agregar un proyecto es editar un JSON."
 metaTitle: "API de despliegue autoalojada: pipelines declarados en JSON"
 metaDescription: "Cómo rediseñé mi CI/CD propio: registro de proyectos como datos, pasos de uno en uno para saber cuál falló, scripts por stdin para no escapar comillas y auth que falla cerrada."

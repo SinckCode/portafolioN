@@ -6,6 +6,7 @@ tags: ["Seguridad", "Secretos", "Python", "Automatización", "Refactor"]
 status: published
 publishedAt: 2026-09-30
 contentFormat: markdown
+coverImage: /covers/credenciales-en-117-scripts.png
 excerpt: "Cada script de automatización que escribí para mi servidor traía la contraseña escrita dentro. Ciento diecisiete. Así los saqué de ahí sin romper ninguno."
 metaTitle: "Sacar credenciales hardcodeadas de 117 scripts sin romperlos"
 metaDescription: "Refactor real de secretos a variables de entorno: validación con ast.parse por archivo, inserción automática de imports y los dos bugs que introduje al hacerlo."

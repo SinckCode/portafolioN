@@ -6,6 +6,7 @@ tags: ["NestJS", "Nodemailer", "SMTP", "Debugging", "Brevo", "Deploy"]
 status: published
 publishedAt: 2026-09-30
 contentFormat: markdown
+coverImage: /covers/tres-bugs-para-que-un-correo-no-saliera.png
 excerpt: "La recuperación de contraseña de mi sitio no funcionaba. Arreglar lo que yo creía que era el problema no habría servido de nada: había tres fallos independientes, uno detrás de otro."
 metaTitle: "Por qué no se enviaba mi correo: tres bugs apilados en NestJS"
 metaDescription: "Caso real de depuración: variables SMTP ausentes, el remitente confundido con la credencial del relay, y plantillas .hbs que nest build no copia a dist. Ninguno se veía solo."

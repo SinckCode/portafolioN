@@ -6,6 +6,7 @@ tags: ["SEO", "Next.js", "Search Console", "Sitemap", "Canonical"]
 status: published
 publishedAt: 2026-09-30
 contentFormat: markdown
+coverImage: /covers/por-que-google-no-indexaba-mi-home.png
 excerpt: "Search Console decía 1 página indexada y 26 descubiertas sin indexar. Arreglé el render, pedí reindexación a mano y no pasó nada. Faltaban dos señales que no tienen nada que ver con el contenido."
 metaTitle: "Descubierta: actualmente sin indexar — dos causas en Next.js"
 metaDescription: "Caso real de SEO en Next.js: el canonical que los componentes de cliente no pueden declarar y un lastmod que miente en cada request. Por qué pedir reindexación no servía."

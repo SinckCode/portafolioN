@@ -6,6 +6,7 @@ tags: ["Docker", "Logs", "logrotate", "PM2", "Mantenimiento", "Homelab"]
 status: published
 publishedAt: 2026-09-30
 contentFormat: markdown
+coverImage: /covers/docker-logs-llenaron-mi-disco.png
 excerpt: "El driver de logs por defecto de Docker no rota nada. Descubrí los 10 GB con el disco al 93%, y la forma correcta de limpiarlos no es borrar el archivo."
 metaTitle: "Logs de Docker sin rotación: 10 GB de disco y cómo evitarlo"
 metaDescription: "El driver json-file de Docker crece sin límite. Cómo encontrar el contenedor culpable, por qué hay que usar truncate y no rm, y la configuración de logrotate con copytruncate."

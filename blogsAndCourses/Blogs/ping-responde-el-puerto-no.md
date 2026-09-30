@@ -6,6 +6,7 @@ tags: ["Redes", "Debugging", "ufw", "Firewall", "MongoDB", "PM2"]
 status: published
 publishedAt: 2026-09-30
 contentFormat: markdown
+coverImage: /covers/ping-responde-el-puerto-no.png
 excerpt: "Dos servicios llevaban semanas reiniciándose cada 30 segundos. El ping a la base de datos respondía en 2.5 ms. La diferencia entre un timeout y un connection refused fue lo que resolvió el caso."
 metaTitle: "Ping responde pero el puerto no: diagnosticar un firewall que dropea"
 metaDescription: "Caso real: dos APIs en crash loop por 24,000 reinicios. ICMP cruzaba pero TCP no. Cómo distinguir un DROP de un REJECT y por qué un timeout apunta siempre al firewall."

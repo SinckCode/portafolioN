@@ -6,6 +6,7 @@ tags: ["Correo", "Postfix", "Self-hosting", "DNS", "SPF", "DKIM", "Homelab"]
 status: published
 publishedAt: 2026-09-30
 contentFormat: markdown
+coverImage: /covers/autohospedar-correo-en-casa-limites.png
 excerpt: "Postfix, Dovecot y OpenDKIM en una VM de mi casa. Enviar sí puede, con truco. Recibir no va a poder nunca, y la razón no es la que yo creía."
 metaTitle: "Autohospedar correo en casa: qué sí funciona y qué no"
 metaDescription: "El puerto 25 saliente bloqueado se resuelve con un relay autenticado en el 587. Recibir no: hace falta abrir el 25 entrante, y un tunel HTTP no transporta SMTP."

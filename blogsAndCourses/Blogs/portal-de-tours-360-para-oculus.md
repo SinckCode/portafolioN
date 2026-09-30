@@ -6,6 +6,7 @@ tags: ["Realidad Virtual", "krpano", "Oculus", "nginx", "Proxmox", "360"]
 status: published
 publishedAt: 2026-09-30
 contentFormat: markdown
+coverImage: /covers/portal-de-tours-360-para-oculus.png
 excerpt: "Una VM, krpano, nginx y un túnel: tours panorámicos con link propio que se abren en el navegador del Quest. Lo que aprendí sobre servir contenido inmersivo desde casa."
 metaTitle: "Portal de tours 360 con krpano y nginx para Oculus Quest"
 metaDescription: "Cómo publico tours panorámicos en mi homelab: estructura de carpetas por proyecto, la trampa de las rutas relativas de krpano, nginx, HTTPS por túnel y el límite de 3DoF."
