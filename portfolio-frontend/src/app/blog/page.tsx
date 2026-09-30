@@ -12,6 +12,7 @@ interface Post {
   excerpt: string;
   publishedAt: string;
   readingTime: number;
+  coverImage?: string;
   tags: string[];
   category: { name: string } | string;
 }
@@ -130,25 +131,37 @@ export default function BlogPage() {
                 href={`/blog/${post.slug}`}
                 className="card group"
               >
-                {/* Cover gradient placeholder */}
+                {/* Portada del articulo. Se usa <img> y no next/image porque
+                    coverImage puede ser una URL externa arbitraria, y el
+                    optimizador exige declarar cada dominio en next.config.
+                    Si no hay portada, se mantiene el degradado de siempre. */}
                 <div className="card__image">
-                  <div className="h-48 bg-gradient-to-br from-primary-container/30 via-surface-card to-primary-container/10 relative">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <svg
-                        className="w-12 h-12 text-primary-container/40"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={1.5}
-                          d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-                        />
-                      </svg>
+                  {post.coverImage ? (
+                    <img
+                      src={post.coverImage}
+                      alt=""
+                      loading="lazy"
+                      className="h-48 w-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-48 bg-gradient-to-br from-primary-container/30 via-surface-card to-primary-container/10 relative">
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <svg
+                          className="w-12 h-12 text-primary-container/40"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+                          />
+                        </svg>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="card__content">

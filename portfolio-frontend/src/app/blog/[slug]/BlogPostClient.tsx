@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import DOMPurify from 'dompurify';
 import ReactMarkdown from 'react-markdown';
@@ -136,7 +135,16 @@ export default function BlogPostClient({ initialPost }: { initialPost?: Post | n
 
             {post.coverImage && (
               <div className="blog-post__cover">
-                <Image src={post.coverImage} alt="" fill className="object-cover" />
+                {/* <img> y no next/image: coverImage puede ser una URL externa
+                    arbitraria (el panel permite pegarla), y el optimizador solo
+                    acepta los dominios declarados en next.config — con
+                    cualquier otro, la pagina falla en tiempo de ejecucion. */}
+                <img
+                  src={post.coverImage}
+                  alt=""
+                  loading="lazy"
+                  className="blog-post__cover-img"
+                />
               </div>
             )}
 

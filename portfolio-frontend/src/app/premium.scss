@@ -2203,6 +2203,19 @@ h3,
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* Antes la portada era un next/image con `fill`, que se posiciona absoluto solo.
+   Al pasar a <img> — necesario porque coverImage puede ser una URL externa y el
+   optimizador solo acepta dominios declarados — hay que llenar el contenedor a
+   mano. Las portadas del sitio son 1200x630 y el marco es 21/9, asi que se
+   recortan ~28px por lado: los margenes del generador son de 64px, de modo que
+   ni el titulo ni el pie se pierden. */
+.blog-post__cover-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 // --- Tipografía del contenido markdown ---
 .blog-post__content {
   color: #b6bec7;
