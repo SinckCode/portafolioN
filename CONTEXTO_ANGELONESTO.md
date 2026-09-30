@@ -1,7 +1,7 @@
 # Contexto Completo — angelonesto.com
 
 > Documento de referencia para no perder contexto entre sesiones.
-> Ultima actualizacion: 2026-08-16
+> Ultima actualizacion: 2026-09-30
 
 ---
 
@@ -36,6 +36,12 @@ Proxmox Hypervisor
 ├── VM 103 (10.10.20.103) — WhatsUpEarth, ERP, Clima, Sensores
 └── VM 104 (10.10.20.104) — AstroCloud (astrocloud.dev)
 ```
+
+> **El deploy NO se hace por SSH desde GitHub Actions.** La VM 100 corre una
+> Deploy API propia (`~/deploy-api`, puerto 5000, repo `SinckCode/deploy-api`)
+> que recibe un `POST /deploy/<proyecto>` y ejecuta el pipeline de ese
+> proyecto, en local o por SSH a la VM que le toque. **Antes de montar el
+> CI/CD de cualquier proyecto nuevo, lee [DEPLOY_API.md](DEPLOY_API.md).**
 
 ---
 
@@ -225,6 +231,7 @@ E:\NEGOCIOS\mi-portfolio-3d\
 ├── PLAN_MAESTRO.md          Infra, VMs, servicios, deploy config
 ├── CONTEXTO_ANGELONESTO.md  ESTE ARCHIVO — contexto completo
 ├── DESIGN.md                Sistema de diseno, colores, tipografia
+├── DEPLOY_API.md            Como se despliega esto: la Deploy API del servidor
 ├── portfolio-frontend/
 │   ├── src/app/             18 rutas (App Router)
 │   ├── src/components/      Componentes compartidos
