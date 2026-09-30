@@ -23,6 +23,7 @@ import {
   Heading1, Heading2, Heading3, List, ListOrdered, ListChecks,
   Quote, CodeXml, ImagePlus, Youtube as YoutubeIcon,
   Table as TableIcon, Minus, Undo, Redo, AlertCircle,
+  Link2 as ImageUrlIcon,
   Pilcrow,
 } from 'lucide-react';
 import './tiptap-editor.scss';
@@ -132,6 +133,22 @@ export default function TipTapEditor({ value, onChange, onImageUpload }: TipTapE
     input.click();
   };
 
+  /**
+   * Inserta una imagen por URL. Existe aparte de `addImage` porque antes el
+   * prompt de URL solo se ofrecia cuando no habia `onImageUpload`, y el panel
+   * de admin siempre lo pasa: en la practica solo se podia subir archivo.
+   */
+  const addImageByUrl = () => {
+    const url = prompt('URL de la imagen (https://...):');
+    if (!url) return;
+    const limpia = url.trim();
+    if (!/^https?:\/\//i.test(limpia)) {
+      alert('La URL debe empezar con http:// o https://');
+      return;
+    }
+    editor.chain().focus().setImage({ src: limpia }).run();
+  };
+
   const addYoutube = () => {
     const url = prompt('URL del video de YouTube:');
     if (url) editor.chain().focus().setYoutubeVideo({ src: url }).run();
@@ -217,7 +234,8 @@ export default function TipTapEditor({ value, onChange, onImageUpload }: TipTapE
         <div className="tiptap-toolbar__group">
           <Btn active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()} title="Cita"><Quote size={s} /></Btn>
           <Btn active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()} title="Bloque de código"><CodeXml size={s} /></Btn>
-          <Btn onClick={addImage} title="Imagen"><ImagePlus size={s} /></Btn>
+          <Btn onClick={addImage} title="Imagen (subir archivo)"><ImagePlus size={s} /></Btn>
+          <Btn onClick={addImageByUrl} title="Imagen por URL"><ImageUrlIcon size={s} /></Btn>
           <Btn onClick={addYoutube} title="YouTube"><YoutubeIcon size={s} /></Btn>
           <Btn onClick={addTable} title="Tabla"><TableIcon size={s} /></Btn>
           <Btn onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Línea divisora"><Minus size={s} /></Btn>

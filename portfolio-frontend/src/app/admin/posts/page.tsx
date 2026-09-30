@@ -15,6 +15,7 @@ interface Post {
   excerpt: string;
   content: string;
   contentFormat?: string;
+  coverImage?: string;
   tags: string[];
   status: string;
   category: { name: string } | null;
@@ -26,6 +27,7 @@ interface Post {
 const emptyForm = {
   title: '',
   excerpt: '',
+  coverImage: '',
   content: '',
   tags: '',
   status: 'draft',
@@ -86,6 +88,7 @@ export default function AdminPosts() {
     setForm({
       title: post.title,
       excerpt: post.excerpt || '',
+      coverImage: post.coverImage || '',
       content,
       tags: (post.tags || []).join(', '),
       status: post.status || 'draft',
@@ -105,6 +108,7 @@ export default function AdminPosts() {
     const payload = {
       title: form.title,
       excerpt: form.excerpt,
+      coverImage: form.coverImage.trim(),
       content: form.content,
       contentFormat: 'html',
       tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
@@ -241,6 +245,40 @@ export default function AdminPosts() {
             onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
             className="input"
           />
+
+          {/* Portada por URL. El schema y el DTO ya aceptaban coverImage; lo que
+              faltaba era exponerlo aqui. La vista previa esta para no guardar una
+              URL rota: con imagenes externas es el fallo mas comun, y no se nota
+              hasta que el articulo ya esta publicado. */}
+          <div className="admin-form__field">
+            <input
+              type="url"
+              placeholder="URL de la imagen de portada (https://...)"
+              value={form.coverImage}
+              onChange={(e) => setForm({ ...form, coverImage: e.target.value })}
+              className="input"
+            />
+            {form.coverImage.trim() !== '' && (
+              <div className="admin-cover-preview">
+                {/* <img> a proposito y no next/image: la URL es externa y
+                    arbitraria, asi que no puede pasar por el optimizador sin
+                    configurar cada dominio en next.config. */}
+                <img
+                  src={form.coverImage.trim()}
+                  alt="Vista previa de la portada"
+                  onError={(e) => {
+                    e.currentTarget.dataset.fallo = 'si';
+                  }}
+                  onLoad={(e) => {
+                    delete e.currentTarget.dataset.fallo;
+                  }}
+                />
+                <span className="admin-cover-preview__hint">
+                  Si no ves la imagen, la URL no es accesible publicamente.
+                </span>
+              </div>
+            )}
+          </div>
 
           {/* Editor visual TipTap */}
           <TipTapEditor
