@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import AboutSection from '@/components/AboutSection';
@@ -14,6 +15,16 @@ import { getAllProjects, pickFeatured } from '@/lib/projects';
 // Cuantos proyectos se muestran en el home. El catalogo completo, con filtros,
 // vive en /portafolio; subir esto a 17 replica el comportamiento anterior.
 const HOME_PROJECT_COUNT = 6;
+
+// El layout raiz define metadataBase pero no `alternates`, asi que cada pagina
+// tiene que declarar su canonical o no emite ninguno. Sin el, Google trata
+// angelonesto.com, angelonesto.com/ y cualquier variante con parametros como
+// candidatas distintas para la misma pagina, y ninguna gana: es el estado
+// "Descubierta: actualmente sin indexar" que reportaba Search Console.
+// La barra final importa — tiene que coincidir con el <loc> del sitemap.
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+};
 
 const jsonLd = {
   '@context': 'https://schema.org',

@@ -19,6 +19,30 @@ const ROOT = path.resolve(__dirname, '..');
 const POSTS_DIR = path.join(ROOT, 'content', 'posts');
 const DRY_RUN = process.argv.includes('--dry-run');
 
+/**
+ * Campos que definen el contenido de un post. `updatedAt` queda fuera a
+ * proposito: es consecuencia de escribir, no motivo para escribir.
+ */
+const CAMPOS_CONTENIDO = [
+  'title', 'slug', 'excerpt', 'content', 'contentFormat', 'coverImage',
+  'author', 'category', 'tags', 'status', 'publishedAt', 'readingTime', 'seo',
+];
+
+/**
+ * `true` si el post en la base ya dice exactamente lo mismo que el .md.
+ *
+ * Sin esto, cada sync hacia un $set identico que igual movia `updatedAt`, y el
+ * sitemap usa esa fecha como `lastmod`: con el sync corriendo en cada
+ * despliegue, todos los articulos le declaraban a Google que acababan de
+ * cambiar. Google ignora el `lastmod` cuando detecta que es inexacto, asi que
+ * mentir ahi cuesta la señal completa.
+ */
+function sinCambios(existing, doc) {
+  if (!existing) return false;
+  const serializar = (v) => JSON.stringify(v === undefined ? null : v);
+  return CAMPOS_CONTENIDO.every((campo) => serializar(existing[campo]) === serializar(doc[campo]));
+}
+
 // ---------------------------------------------------------------- env
 
 function loadEnv() {
@@ -96,6 +120,8 @@ async function main() {
 
   let created = 0;
   let updated = 0;
+  let unchanged = 0;
+  let cambiados = 0;
 
   for (const file of files) {
     const { data, content } = parseFrontmatter(
@@ -128,7 +154,12 @@ async function main() {
       category: category ? category._id : null,
       tags: data.tags || [],
       status: data.status || 'draft',
-      publishedAt: data.publishedAt ? new Date(data.publishedAt) : new Date(),
+      // Si el .md no declara publishedAt, se conserva la del post existente.
+      // Antes caia a `new Date()`, asi que cada sync le reescribia la fecha de
+      // publicacion a "ahora" a cualquier articulo sin ese campo.
+      publishedAt: data.publishedAt
+        ? new Date(data.publishedAt)
+        : existing?.publishedAt || new Date(),
       readingTime: readingTime(content),
       seo: {
         metaTitle: data.metaTitle || '',
@@ -136,25 +167,33 @@ async function main() {
         metaKeywords: data.metaKeywords || [],
         ogImage: data.ogImage || '',
       },
-      updatedAt: new Date(),
     };
 
     const words = content.trim().split(/\s+/).length;
-    const label = existing ? 'UPDATE' : 'CREATE';
+    const igual = sinCambios(existing, doc);
+    const label = !existing ? 'CREATE' : igual ? 'IGUAL ' : 'UPDATE';
     console.log(`  ${label}  ${data.slug}`);
     console.log(`          ${words} palabras · ${doc.readingTime} min · ${doc.status}`);
-    if (existing) {
+    if (existing && !igual) {
       console.log(`          antes: ${existing.content.trim().split(/\s+/).length} palabras`);
     }
+
+    if (igual) {
+      unchanged++;
+      continue;
+    }
+    // Se cuenta aparte de created/updated porque en dry run esos no se tocan.
+    cambiados++;
 
     if (!DRY_RUN) {
       if (existing) {
         // Preserva metricas acumuladas: no se tocan views, likes ni likesBy.
-        await posts.updateOne({ _id: existing._id }, { $set: doc });
+        await posts.updateOne({ _id: existing._id }, { $set: { ...doc, updatedAt: new Date() } });
         updated++;
       } else {
         await posts.insertOne({
           ...doc,
+          updatedAt: new Date(),
           views: 0,
           likes: 0,
           likesBy: [],
@@ -168,8 +207,8 @@ async function main() {
 
   console.log(
     DRY_RUN
-      ? '\nDry run: no se escribio nada.'
-      : `\nListo: ${created} creado(s), ${updated} actualizado(s).`,
+      ? `\nDry run: no se escribio nada. ${cambiados} con cambios, ${unchanged} igual(es).`
+      : `\nListo: ${created} creado(s), ${updated} actualizado(s), ${unchanged} sin cambios.`,
   );
   await mongoose.disconnect();
 }

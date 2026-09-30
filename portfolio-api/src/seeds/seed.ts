@@ -23,6 +23,42 @@ function cargarDetalles(): Record<string, { details: string }> {
   return salida;
 }
 
+/**
+ * Serializa un valor ignorando lo que Mongo agrega por su cuenta, para poder
+ * compararlo con lo que trae el seed.
+ */
+const serializar = (valor: unknown): string | undefined =>
+  JSON.stringify(valor, (clave, v) =>
+    clave === '_id' || clave === '__v' ? undefined : v,
+  );
+
+/**
+ * `true` si el documento en la base ya dice exactamente lo que el seed quiere
+ * escribir, campo por campo.
+ *
+ * Importa porque un `$set` identico igual mueve `updatedAt`, y el sitemap usa
+ * esa fecha como `lastmod`. Con el seed corriendo en cada despliegue, los 17
+ * proyectos le declaraban a Google que acababan de cambiar cada vez —
+ * exactamente la señal inexacta que hace que Google deje de creerle al
+ * `lastmod`. De paso, evita escrituras inutiles a la base.
+ */
+function yaEstaIgual(
+  existente: Record<string, unknown> | null,
+  deseado: Record<string, unknown>,
+): boolean {
+  if (!existente) return false;
+  return Object.keys(deseado).every((clave) => {
+    const actual = existente[clave];
+    const nuevo = deseado[clave];
+    // El schema guarda `date` como Date y el seed lo trae como 'YYYY-MM-DD';
+    // sin esto, la fecha pareceria distinta siempre.
+    if (actual instanceof Date && typeof nuevo === 'string') {
+      return actual.toISOString().slice(0, 10) === nuevo.slice(0, 10);
+    }
+    return serializar(actual) === serializar(nuevo);
+  });
+}
+
 const ALL_SECTIONS = [
   'users',
   'categories',
@@ -149,11 +185,20 @@ async function seed() {
         `content/projects.json no tiene descripcion para: ${faltantes.join(', ')}`,
       );
     }
+    let escritos = 0;
     for (const proj of projects) {
       const completo = { ...proj, details: detalles[proj.slug].details };
+      const existente = (await projectModel
+        .findOne({ slug: proj.slug })
+        .lean()) as Record<string, unknown> | null;
+      if (yaEstaIgual(existente, completo)) continue;
       await projectModel.updateOne({ slug: proj.slug }, { $set: completo }, { upsert: true });
+      escritos++;
     }
-    console.log(`${projects.length} projects seeded (descripciones desde content/projects.json)`);
+    console.log(
+      `projects: ${escritos} escritos, ${projects.length - escritos} sin cambios ` +
+        `(descripciones desde content/projects.json)`,
+    );
   }
 
   // Seed services (mismo contenido que la SPA src/services.js)
