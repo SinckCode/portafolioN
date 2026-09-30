@@ -11,13 +11,16 @@ export class MailService {
   private readonly logger = new Logger(MailService.name);
 
   constructor(private configService: ConfigService) {
+    // Se lee del config con namespace, como el resto del proyecto: ahi viven
+    // los defaults. Antes leia SMTP_* de process.env sin default util, asi que
+    // un .env incompleto daba un transporte silenciosamente inservible.
     this.transporter = nodemailer.createTransport({
-      host: this.configService.get('SMTP_HOST', 'smtp.gmail.com'),
-      port: this.configService.get('SMTP_PORT', 587),
-      secure: false,
+      host: this.configService.get<string>('mail.host'),
+      port: this.configService.get<number>('mail.port'),
+      secure: false, // 587 arranca en claro y sube a TLS con STARTTLS
       auth: {
-        user: this.configService.get('SMTP_USER'),
-        pass: this.configService.get('SMTP_PASS'),
+        user: this.configService.get<string>('mail.user'),
+        pass: this.configService.get<string>('mail.pass'),
       },
     });
   }
@@ -55,7 +58,12 @@ export class MailService {
   private async send(to: string, subject: string, html: string) {
     try {
       await this.transporter.sendMail({
-        from: `"Angel Onesto" <${this.configService.get('SMTP_USER')}>`,
+        // El remitente es MAIL_FROM, no SMTP_USER. Con un relay como Brevo,
+        // SMTP_USER es la credencial de acceso (algo@smtp-brevo.com), no una
+        // direccion verificada para enviar: usarla como From hace que el relay
+        // rechace el mensaje. MAIL_FROM tiene que ser un remitente dado de alta
+        // y verificado en el proveedor.
+        from: `"${this.configService.get<string>('mail.fromName')}" <${this.configService.get<string>('mail.from')}>`,
         to,
         subject,
         html,

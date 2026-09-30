@@ -38,7 +38,11 @@ const configuration = () => ({
     port: parseInt(process.env.SMTP_PORT || '587', 10),
     user: process.env.SMTP_USER || '',
     pass: process.env.SMTP_PASS || '',
-    from: process.env.MAIL_FROM || 'noreply@angelonesto.com',
+    // Tiene que ser un remitente verificado en el proveedor de envio. El
+    // default anterior (noreply@) no lo estaba, asi que cualquier envio se
+    // habria rechazado incluso con las credenciales bien puestas.
+    from: process.env.MAIL_FROM || 'contacto@angelonesto.com',
+    fromName: process.env.MAIL_FROM_NAME || 'Angel Onesto',
   },
   generation: {
     anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
