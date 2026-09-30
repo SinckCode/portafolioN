@@ -238,7 +238,7 @@ export default function PerfilPage() {
                 </p>
                 <div className="profile__links flex gap-4 mt-3 justify-center sm:justify-start">
                   <a href="https://github.com/SinckCode" target="_blank" rel="noopener noreferrer" className="profile__link">GitHub</a>
-                  <a href="mailto:soyangeldavid1@gmail.com" className="profile__link">Email</a>
+                  <a href="mailto:contacto@angelonesto.com" className="profile__link">Email</a>
                 </div>
               </div>
               <Link href="/perfil/editar" className="profile__edit-btn">

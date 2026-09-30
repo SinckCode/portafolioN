@@ -11,7 +11,7 @@ import { useScrollReveal } from '@/hooks/useScrollReveal';
 // Contacto premium (port de la SPA): labels flotantes, validación,
 // honeypot, checkmark animado y cards de contacto con copy-to-clipboard.
 
-const EMAIL = 'soyangeldavid1@gmail.com';
+const EMAIL = 'contacto@angelonesto.com';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type Status = 'idle' | 'sending' | 'success' | 'error';

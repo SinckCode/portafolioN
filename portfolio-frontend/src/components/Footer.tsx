@@ -35,7 +35,7 @@ export default function Footer() {
             <Icon name="github" size={19} />
           </a>
           <a
-            href="mailto:soyangeldavid1@gmail.com"
+            href="mailto:contacto@angelonesto.com"
             aria-label="Enviar correo a Ángel David Onesto"
           >
             <Icon name="mail" size={19} />
