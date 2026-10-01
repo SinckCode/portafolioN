@@ -1,16 +1,22 @@
-import Link from 'next/link';
+'use client';
+
 import Image from 'next/image';
 import { getTypeColor } from '@/lib/techColors';
 import { estadoDe } from '@/lib/projectStatus';
+import { useProjectModal } from './ProjectModalProvider';
 import { Project } from '@/types';
 
 // Tarjeta del catálogo: la captura manda y el texto va sobrepuesto, con los
 // datos secundarios (estado, año, stack) en monoespaciada.
 //
-// Es un <Link> real a /portafolio/<slug>, no un div con onClick: así el HTML
-// del listado trae los enlaces que necesita un crawler y el proyecto se puede
-// compartir o abrir en otra pestaña. Dentro de /portafolio, la ruta
-// interceptora de @modal convierte ese mismo clic en un modal.
+// Sigue siendo un <a> real a /portafolio/<slug>: así el HTML del listado trae
+// los enlaces que necesita un crawler, el proyecto se puede compartir, y
+// ctrl+clic o rueda del ratón abren en otra pestaña como en cualquier enlace.
+// Lo único que se intercepta es el clic izquierdo simple, que abre el modal.
+//
+// Es un <a> y no un <Link> a propósito: nunca navegamos desde aquí, así que el
+// prefetch de Next solo añadiría tráfico por cada tarjeta en pantalla. Y si el
+// JavaScript falla, el enlace sigue llevando a la página completa.
 //
 // El estado online/local sale de lib/projectStatus: es una etiqueta derivada de
 // si el proyecto publica demo, no telemetría del servidor.
@@ -24,12 +30,31 @@ interface ProjectCardProps {
 }
 
 export default function ProjectCard({ project, destacada }: ProjectCardProps) {
+  const { abrir } = useProjectModal();
   const estado = estadoDe(project);
   const tieneVideo = Boolean(project.video) || (project.videos?.length ?? 0) > 0;
 
+  const alHacerClic = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // Respetar los gestos que el usuario espera de un enlace: abrir en pestaña
+    // nueva, en ventana nueva o descargar. Solo el clic simple abre el modal.
+    if (
+      e.defaultPrevented ||
+      e.button !== 0 ||
+      e.metaKey ||
+      e.ctrlKey ||
+      e.shiftKey ||
+      e.altKey
+    ) {
+      return;
+    }
+    e.preventDefault();
+    abrir(project);
+  };
+
   return (
-    <Link
+    <a
       href={`/portafolio/${project.slug}`}
+      onClick={alHacerClic}
       className={`pc ${destacada ? 'pc--hero' : ''}`}
       aria-label={`Ver ${project.title}`}
     >
@@ -70,6 +95,6 @@ export default function ProjectCard({ project, destacada }: ProjectCardProps) {
           {project.technologies.length > 5 && ` · +${project.technologies.length - 5}`}
         </span>
       </span>
-    </Link>
+    </a>
   );
 }

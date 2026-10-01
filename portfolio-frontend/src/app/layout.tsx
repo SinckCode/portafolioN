@@ -3,6 +3,7 @@ import '@fontsource-variable/inter';
 import '@fontsource-variable/space-grotesk';
 import '@fontsource-variable/jetbrains-mono';
 import { AuthProvider } from '@/context/AuthContext';
+import ProjectModalProvider from '@/components/ProjectModalProvider';
 import './globals.scss';
 import './premium.scss';
 import './portafolio.scss';
@@ -59,7 +60,9 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className="min-h-screen bg-background text-on-surface antialiased">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <ProjectModalProvider>{children}</ProjectModalProvider>
+        </AuthProvider>
       </body>
     </html>
   );
