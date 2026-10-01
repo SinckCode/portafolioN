@@ -72,7 +72,16 @@ export class PostsService {
 
   async findBySlug(slug: string): Promise<PostDocument> {
     const post = await this.postModel
-      .findOneAndUpdate({ slug }, { $inc: { views: 1 } }, { new: true })
+      // timestamps:false -> contar una visita no es modificar el post.
+      // El schema lleva timestamps:true, asi que Mongoose reescribia updatedAt
+      // en cada lectura. De updatedAt sale el lastmod del sitemap, de modo que
+      // Google veia los 13 posts recien modificados en cada rastreo, incluido
+      // el suyo propio: el rastreo se invalidaba a si mismo.
+      .findOneAndUpdate(
+        { slug },
+        { $inc: { views: 1 } },
+        { new: true, timestamps: false },
+      )
       .populate('author', 'name avatar bio')
       .populate('category', 'name slug color')
       .exec();
