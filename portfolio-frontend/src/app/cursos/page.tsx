@@ -9,6 +9,7 @@ interface CourseItem {
   _id: string;
   title: string;
   slug: string;
+  coverImage?: string;
   instructor: { name: string } | string;
   level: 'beginner' | 'intermediate' | 'advanced';
   duration: string;
@@ -170,36 +171,46 @@ export default function CursosPage() {
                 href={`/cursos/${course.slug}`}
                 className="card group"
               >
-                {/* Cover */}
+                {/* Portada. <img> y no next/image: coverImage puede ser una
+                    URL externa y el optimizador exige declarar cada dominio en
+                    next.config. Sin portada se conserva el degradado. */}
                 <div className="card__image">
-                  <div className="h-44 bg-gradient-to-br from-primary-container/20 via-surface-card to-primary-container/10 relative">
+                  <div className="h-44 relative">
+                    {course.coverImage ? (
+                      <img
+                        src={course.coverImage}
+                        alt=""
+                        loading="lazy"
+                        className="h-44 w-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-44 bg-gradient-to-br from-primary-container/20 via-surface-card to-primary-container/10 flex items-center justify-center">
+                        <svg
+                          className="w-12 h-12 text-primary-container/30"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      </div>
+                    )}
                     <div className="absolute top-3 right-3">
-                      <span
-                        className={`chip chip--sm ${levelChipClass[course.level]}`}
-                      >
+                      <span className={`chip chip--sm ${levelChipClass[course.level]}`}>
                         {levelLabels[course.level]}
                       </span>
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <svg
-                        className="w-12 h-12 text-primary-container/30"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={1.5}
-                          d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={1.5}
-                          d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
                     </div>
                   </div>
                 </div>

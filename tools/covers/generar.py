@@ -397,11 +397,120 @@ def generar_proyectos():
             os.path.getsize(destino) // 1024))
 
 
+
+# ----------------------------------------------------------- cursos
+# Ficha de catalogo, no articulo: aqui lo que vende es el alcance del curso
+# (nivel, duracion, cuanto material hay), asi que manda el titulo y debajo van
+# las cifras. Sin panel de terminal, que es el lenguaje del blog.
+
+SALIDA_CURSOS = os.path.join(RAIZ, 'portfolio-frontend', 'public', 'courses')
+
+NIVELES = {
+    'beginner': ('principiante', (82, 196, 136)),
+    'intermediate': ('intermedio', PRIMARIO),
+    'advanced': ('avanzado', (244, 162, 97)),
+}
+
+CURSOS = [
+    {
+        'slug': 'homelab-desde-cero',
+        'titulo': 'Homelab desde cero: tu propio servidor en casa',
+        'nivel': 'beginner', 'duracion': '5h 20m', 'modulos': 6, 'lecciones': 33,
+        'categoria': 'devops',
+    },
+    {
+        'slug': 'cicd-propio-sin-exponer-ssh',
+        'titulo': 'CI/CD propio: despliega sin entregar tus llaves',
+        'nivel': 'intermediate', 'duracion': '3h 45m', 'modulos': 6, 'lecciones': 28,
+        'categoria': 'devops',
+    },
+    {
+        'slug': 'iot-del-sensor-al-dashboard',
+        'titulo': 'IoT real: del sensor ESP32 al dashboard en internet',
+        'nivel': 'beginner', 'duracion': '4h 15m', 'modulos': 6, 'lecciones': 29,
+        'categoria': 'iot',
+    },
+    {
+        'slug': 'seo-tecnico-en-nextjs',
+        'titulo': 'SEO técnico en Next.js: que Google sí indexe tu sitio',
+        'nivel': 'intermediate', 'duracion': '2h 50m', 'modulos': 6, 'lecciones': 24,
+        'categoria': 'desarrollo web',
+    },
+    {
+        'slug': 'nextjs-nestjs-en-produccion',
+        'titulo': 'Next.js + NestJS en producción: del localhost al dominio propio',
+        'nivel': 'advanced', 'duracion': '6h 30m', 'modulos': 7, 'lecciones': 36,
+        'categoria': 'desarrollo web',
+    },
+    {
+        'slug': 'react-practico-de-cero-a-deploy',
+        'titulo': 'React práctico: de cero a deploy',
+        'nivel': 'intermediate', 'duracion': '6h 15m', 'modulos': 3, 'lecciones': 9,
+        'categoria': 'desarrollo web',
+    },
+    {
+        'slug': 'docker-y-cicd-desde-cero',
+        'titulo': 'Docker y CI/CD desde cero',
+        'nivel': 'beginner', 'duracion': '4h 30m', 'modulos': 3, 'lecciones': 11,
+        'categoria': 'devops',
+    },
+]
+
+
+def portada_curso(c):
+    img, d = base()
+
+    etiqueta, color_nivel = NIVELES[c['nivel']]
+    f_mono = fuente('JetBrainsMono-Regular.ttf', 20)
+
+    # Insignia de nivel arriba, que es lo primero que filtra quien mira el
+    # catalogo: saber si le queda grande o chico.
+    y = MARGEN
+    ancho = d.textlength(etiqueta.upper(), font=f_mono) + 28
+    d.rounded_rectangle([MARGEN, y, MARGEN + ancho, y + 34], radius=17,
+                        fill=color_nivel)
+    d.text((MARGEN + 14, y + 6), etiqueta.upper(), font=f_mono, fill=(10, 12, 15))
+
+    # Titulo
+    f_tit = fuente('SpaceGrotesk.ttf', 54)
+    lineas = envolver(c['titulo'], f_tit, ANCHO - MARGEN * 2 - 30, d)[:3]
+    y += 72
+    for ln in lineas:
+        d.text((MARGEN, y), ln, font=f_tit, fill=TEXTO)
+        y += 66
+
+    # Cifras del alcance, separadas por puntos medios.
+    f_cifras = fuente('JetBrainsMono-Regular.ttf', 23)
+    cifras = '%s   ·   %d módulos   ·   %d lecciones' % (
+        c['duracion'], c['modulos'], c['lecciones'])
+    y += 14
+    d.line([(MARGEN, y), (MARGEN + 70, y)], fill=color_nivel, width=3)
+    d.text((MARGEN, y + 22), cifras, font=f_cifras, fill=TEXTO_SUAVE)
+
+    pie(d, c['categoria'])
+
+    os.makedirs(SALIDA_CURSOS, exist_ok=True)
+    destino = os.path.join(SALIDA_CURSOS, '%s.png' % c['slug'])
+    img.save(destino, 'PNG', optimize=True)
+    return destino
+
+
+def generar_cursos():
+    for c in CURSOS:
+        ruta_png = portada_curso(c)
+        print('  %-44s %3d KB' % ('/courses/%s.png' % c['slug'],
+                                  os.path.getsize(ruta_png) // 1024))
+
+
 def main():
     pedido = sys.argv[1] if len(sys.argv) > 1 else None
 
     if pedido == 'proyectos':
         generar_proyectos()
+        return 0
+
+    if pedido == 'cursos':
+        generar_cursos()
         return 0
 
     hechas = 0

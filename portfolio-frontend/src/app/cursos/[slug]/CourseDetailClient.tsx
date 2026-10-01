@@ -26,6 +26,7 @@ interface Course {
   title: string;
   slug: string;
   description: string;
+  coverImage?: string;
   level: string;
   duration: string;
   price: number;
@@ -220,6 +221,16 @@ export default function CourseDetailClient({ initialCourse }: { initialCourse?: 
               </svg>
               Volver a cursos
             </Link>
+
+            {course.coverImage && (
+              /* <img> y no next/image: coverImage puede ser una URL externa y
+                 el optimizador exige declarar cada dominio en next.config. */
+              <img
+                src={course.coverImage}
+                alt=""
+                className="w-full rounded-xl border border-white/10 mb-8"
+              />
+            )}
 
             <div className="flex flex-col lg:flex-row gap-10">
               <div className="flex-1">

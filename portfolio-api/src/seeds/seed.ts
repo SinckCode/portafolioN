@@ -232,6 +232,7 @@ async function seed() {
     {
       title: 'Docker y CI/CD desde cero',
       slug: 'docker-y-cicd-desde-cero',
+      coverImage: '/courses/docker-y-cicd-desde-cero.png',
       description:
         'Aprende a contenerizar tus aplicaciones y a construir pipelines de despliegue automático con GitHub Actions. Curso práctico basado en proyectos reales: al final tendrás tu propia app desplegándose sola con cada push.',
       instructor: adminUser?._id,
@@ -283,6 +284,7 @@ async function seed() {
     {
       title: 'React práctico: de cero a deploy',
       slug: 'react-practico-de-cero-a-deploy',
+      coverImage: '/courses/react-practico-de-cero-a-deploy.png',
       description:
         'Construye una aplicación React completa y real: componentes, hooks, estado, consumo de APIs, animaciones y despliegue. Basado en el mismo stack con el que está hecho este portafolio.',
       instructor: adminUser?._id,
