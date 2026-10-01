@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import ProjectGallery, { type MedioGaleria } from './ProjectGallery';
 import { Project } from '@/types';
 import { estadoDe } from '@/lib/projectStatus';
 import ProjectDetails from './ProjectDetails';
@@ -34,6 +34,14 @@ export default function ProjectDetailContent({ project }: ProjectDetailContentPr
     : project.video
       ? [project.video]
       : [];
+
+  // Los videos van primero: son lo que mejor explica un proyecto en
+  // movimiento, y es el orden que tenía la galería original.
+  const medios: MedioGaleria[] = [
+    ...videos.map((src) => ({ tipo: 'video' as const, src })),
+    ...imagenes.map((src) => ({ tipo: 'imagen' as const, src })),
+  ];
+
   const demos = [
     ...(project.demo ? [project.demo] : []),
     ...(project.demos ?? []),
@@ -68,34 +76,10 @@ export default function ProjectDetailContent({ project }: ProjectDetailContentPr
         </ul>
       </header>
 
-      {(videos.length > 0 || imagenes.length > 0) && (
+      {medios.length > 0 && (
         <section className="pd__section">
           <h2 className="pd__h2">Galería</h2>
-
-          {videos.length > 0 && (
-            <div className="pd__videos">
-              {videos.map((v, i) => (
-                <video key={i} src={v} controls preload="metadata" className="pd__video" />
-              ))}
-            </div>
-          )}
-
-          {imagenes.length > 0 && (
-            <div className="pd__shots">
-              {imagenes.map((img, i) => (
-                <div key={i} className="pd__shot">
-                  <Image
-                    src={img}
-                    alt={`${project.title}, captura ${i + 1}`}
-                    fill
-                    className="pd__shot-img"
-                    loading="lazy"
-                    sizes="(max-width: 768px) 50vw, 33vw"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
+          <ProjectGallery medios={medios} titulo={project.title} />
         </section>
       )}
 
