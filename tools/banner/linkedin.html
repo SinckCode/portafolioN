@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Banner LinkedIn — Ángel Onesto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Banner de LinkedIn — 1584 x 396 px exactos.
+     Paleta y tipografia salen de portfolio-frontend/src/app/globals.css
+     para que el perfil y angelonesto.com se lean como la misma marca.
+
+     Zona muerta: LinkedIn encima la foto de perfil sobre la esquina
+     inferior izquierda. Todo lo legible arranca pasados los 360px. */
+
+  :root {
+    --cyan:       #00b4d8;
+    --cyan-dim:   #4cd6fb;
+    --surface:    #0f1115;
+    --border:     #2a2d35;
+    --text:       #dee3e6;
+    --text-2:     #aaaaaa;
+    --text-muted: #666666;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #15171c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  .banner {
+    position: relative;
+    width: 1584px;
+    height: 396px;
+    overflow: hidden;
+    background:
+      radial-gradient(900px 520px at 78% 14%, rgba(0, 180, 216, 0.16), transparent 62%),
+      radial-gradient(620px 420px at 30% 110%, rgba(0, 180, 216, 0.07), transparent 60%),
+      linear-gradient(135deg, #000000 0%, var(--surface) 52%, #070a0d 100%);
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Rejilla tenue: la textura de fondo del portafolio. */
+  .banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.028) 1px, transparent 1px);
+    background-size: 56px 56px;
+    -webkit-mask-image: radial-gradient(1100px 500px at 60% 40%, #000 20%, transparent 78%);
+    mask-image: radial-gradient(1100px 500px at 60% 40%, #000 20%, transparent 78%);
+  }
+
+  /* Filo cyan superior. */
+  .banner::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, var(--cyan) 28%, var(--cyan-dim) 55%, transparent 92%);
+    opacity: 0.85;
+  }
+
+  /* ---------- Contenido ---------- */
+
+  .contenido {
+    position: absolute;
+    left: 372px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+  }
+
+  .insignia {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 15px;
+    border: 1px solid rgba(0, 180, 216, 0.32);
+    border-radius: 999px;
+    background: rgba(0, 180, 216, 0.07);
+    font-size: 12.5px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--cyan-dim);
+    margin-bottom: 20px;
+  }
+
+  .insignia__punto {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 9px rgba(34, 197, 94, 0.9);
+  }
+
+  .nombre {
+    font-size: 57px;
+    font-weight: 800;
+    letter-spacing: -0.028em;
+    line-height: 1.02;
+    color: #ffffff;
+    margin-bottom: 14px;
+  }
+
+  .nombre__acento {
+    background: linear-gradient(104deg, var(--cyan) 0%, var(--cyan-dim) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .rol {
+    font-size: 21px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.008em;
+    margin-bottom: 8px;
+  }
+
+  .rol__sep {
+    color: rgba(0, 180, 216, 0.55);
+    margin: 0 10px;
+    font-weight: 400;
+  }
+
+  .lema {
+    font-size: 14.5px;
+    font-weight: 400;
+    color: var(--text-muted);
+    letter-spacing: 0.005em;
+    margin-bottom: 26px;
+  }
+
+  /* ---------- Cifras ---------- */
+
+  .cifras {
+    display: flex;
+    align-items: stretch;
+    gap: 30px;
+  }
+
+  .cifra {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .cifra__n {
+    font-size: 27px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .cifra__n span { color: var(--cyan); }
+
+  .cifra__t {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10.5px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.13em;
+    color: var(--text-muted);
+  }
+
+  .cifras__raya {
+    width: 1px;
+    background: var(--border);
+  }
+
+  /* ---------- Columna derecha: orbitas ---------- */
+
+  .orbitas {
+    position: absolute;
+    right: 128px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 250px;
+    height: 250px;
+    z-index: 2;
+  }
+
+  .anillo {
+    position: absolute;
+    inset: 0;
+    border: 1px solid rgba(0, 180, 216, 0.3);
+    border-radius: 50%;
+  }
+
+  .anillo--a { transform: rotate(-24deg) scaleY(0.34); border-color: rgba(0, 180, 216, 0.45); }
+  .anillo--b { transform: rotate(38deg)  scaleY(0.30); border-color: rgba(0, 180, 216, 0.32); }
+  .anillo--c { transform: rotate(84deg)  scaleY(0.26); border-color: rgba(0, 180, 216, 0.22); }
+
+  .anillo--borde {
+    inset: 14px;
+    border: 1px dashed rgba(0, 180, 216, 0.16);
+    transform: none;
+  }
+
+  .nucleo {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 62px; height: 62px;
+    margin: -31px 0 0 -31px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 34% 30%, var(--cyan-dim), var(--cyan) 52%, #016c84 100%);
+    box-shadow:
+      0 0 28px rgba(0, 180, 216, 0.55),
+      0 0 68px rgba(0, 180, 216, 0.26),
+      inset -5px -6px 14px rgba(0, 0, 0, 0.42);
+  }
+
+  .satelite {
+    position: absolute;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--cyan-dim);
+    box-shadow: 0 0 11px rgba(76, 214, 251, 0.95);
+  }
+
+  .satelite--1 { left: 6px;   top: 50%;  margin-top: -36px; }
+  .satelite--2 { right: 20px; top: 50%;  margin-top: 44px; }
+  .satelite--3 { left: 50%;   top: 16px; margin-left: 54px; width: 5px; height: 5px; opacity: 0.75; }
+
+  /* ---------- Dominios ---------- */
+
+  .dominios {
+    position: absolute;
+    right: 56px;
+    bottom: 34px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 7px;
+    z-index: 3;
+  }
+
+  .dominio {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    color: var(--text-2);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .dominio--sec {
+    font-size: 11.5px;
+    color: var(--text-muted);
+  }
+
+  .dominio__barra {
+    width: 16px;
+    height: 1px;
+    background: var(--cyan);
+    opacity: 0.6;
+  }
+
+  .dominio--sec .dominio__barra { width: 10px; opacity: 0.3; }
+
+  /* ---------- Stack, franja superior izquierda ----------
+     Va arriba y no en vertical a media altura: la foto de perfil cubre de
+     y=229 hacia abajo en los primeros ~368px, y una tira centrada quedaba
+     medio tapada. Esta banda es la unica parte del flanco izquierdo que
+     siempre se ve. */
+
+  .stack {
+    position: absolute;
+    left: 58px;
+    top: 36px;
+    white-space: nowrap;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px;
+    letter-spacing: 0.17em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.22);
+    z-index: 1;
+  }
+</style>
+</head>
+<body>
+  <div class="banner">
+
+    <div class="stack">Next.js · NestJS · Docker · Proxmox · ESP32</div>
+
+    <div class="orbitas" aria-hidden="true">
+      <div class="anillo anillo--borde"></div>
+      <div class="anillo anillo--a"></div>
+      <div class="anillo anillo--b"></div>
+      <div class="anillo anillo--c"></div>
+      <div class="nucleo"></div>
+      <div class="satelite satelite--1"></div>
+      <div class="satelite satelite--2"></div>
+      <div class="satelite satelite--3"></div>
+    </div>
+
+    <div class="contenido">
+      <div class="insignia">
+        <span class="insignia__punto"></span>
+        Disponible para proyectos freelance
+      </div>
+
+      <h1 class="nombre">
+        Ángel David <span class="nombre__acento">Onesto Frías</span>
+      </h1>
+
+      <p class="rol">
+        Full Stack <span class="rol__sep">/</span>
+        DevOps <span class="rol__sep">/</span>
+        Infraestructura
+      </p>
+
+      <p class="lema">
+        Ingeniería de Software · Del hardware a la nube, con servidores propios.
+      </p>
+
+      <div class="cifras">
+        <div class="cifra">
+          <span class="cifra__n">20<span>+</span></span>
+          <span class="cifra__t">Proyectos</span>
+        </div>
+        <div class="cifras__raya"></div>
+        <div class="cifra">
+          <span class="cifra__n">71<span>+</span></span>
+          <span class="cifra__t">Tecnologías</span>
+        </div>
+        <div class="cifras__raya"></div>
+        <div class="cifra">
+          <span class="cifra__n">5</span>
+          <span class="cifra__t">Años programando</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dominios">
+      <span class="dominio"><span class="dominio__barra"></span>angelonesto.com</span>
+      <span class="dominio dominio--sec"><span class="dominio__barra"></span>astrocloud.dev</span>
+    </div>
+
+  </div>
+</body>
+</html>
