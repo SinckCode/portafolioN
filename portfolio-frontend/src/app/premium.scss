@@ -3037,11 +3037,22 @@ a.project-card {
   border: 1px solid rgba(0, 180, 216, 0.16);
   border-radius: 14px;
   will-change: transform;
-  transition: background 300ms var(--ease-out), border-color 300ms var(--ease-out);
+  transition: background 300ms var(--ease-out), border-color 300ms var(--ease-out),
+    transform 250ms var(--ease-out);
 
+  /* El levantamiento va en CSS y no en whileHover de Framer: alli competia con
+     el `y` del variant de entrada, cuya transicion lleva delay, y al salir el
+     raton la tarjeta volvia con ese retardo — se veia como si se cayera. */
   &:hover {
     background: rgba(0, 180, 216, 0.07);
     border-color: rgba(0, 180, 216, 0.3);
+    transform: translateY(-4px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &:hover {
+      transform: none;
+    }
   }
 }
 

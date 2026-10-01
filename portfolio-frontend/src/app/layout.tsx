@@ -53,13 +53,21 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
+  modal,
 }: {
   children: React.ReactNode;
+  // Slot de la ruta interceptora que abre el detalle de un proyecto en modal
+  // desde cualquier parte del sitio. Fuera de esa ruta lo llena @modal/default,
+  // que devuelve null.
+  modal: React.ReactNode;
 }) {
   return (
     <html lang="es">
       <body className="min-h-screen bg-background text-on-surface antialiased">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          {modal}
+        </AuthProvider>
       </body>
     </html>
   );

@@ -77,12 +77,7 @@ export default function ContactAccountCTA() {
         <motion.span className="contact-alt__line" variants={lineaVariants} />
       </div>
 
-      <motion.div
-        className="contact-alt__card"
-        variants={tarjetaVariants}
-        whileHover={{ y: -4 }}
-        transition={{ duration: 0.25 }}
-      >
+      <motion.div className="contact-alt__card" variants={tarjetaVariants}>
         <motion.span
           className="contact-alt__icon"
           aria-hidden="true"
